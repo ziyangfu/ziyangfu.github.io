@@ -1,2 +1,2 @@
 # ziyangfu.github.io
-test
+记录技术，记录生活
