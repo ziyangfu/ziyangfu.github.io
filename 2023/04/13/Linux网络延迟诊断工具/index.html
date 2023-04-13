@@ -29,8 +29,8 @@
 <meta property="article:published_time" content="2023-04-13T01:32:57.000Z">
 <meta property="article:modified_time" content="2023-04-13T02:04:53.913Z">
 <meta property="article:author" content="FZY">
-<meta property="article:tag" content="原创">
 <meta property="article:tag" content="网络">
+<meta property="article:tag" content="原创">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="http://ziyangfu.github.io/2023/04/13/Linux%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7/image-20230329104110311.png">
   
@@ -309,7 +309,7 @@
 <p>iperf是一个网络性能测试工具。Iperf可以测试TCP和UDP带宽质量。iperf可以测量最大TCP带宽，具有多种参数和UDP特性。 iperf可以报告带宽，延迟抖动和数据包丢失。</p>
 <p>抖动和丢包率适应于UDP测试，带宽测试适用与TCP与UDP。</p>
 <p>需要服务端与客户端同时开启 iperf 程序。</p>
-<img src="/2023/04/13/Linux%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7/image-20230329104110311.png" srcset="/img/loading.gif" lazyload class="" title="image1">
+<img src="/2023/04/13/Linux%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7/image-20230329104110311.png" srcset="/img/loading.gif" lazyload class title="image1">
 
 <p>​																					带宽测试</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># UDP测试 带宽  Jitter抖动  丢包率</span><br>[ 3] <span class="hljs-built_in">local</span> 192.168.1.1 port 2152 connected with 192.168.101.2 port 56768<br>[ ID] Interval      Transfer    Bandwidth       Jitter  Lost/Total Datagrams<br>[ 3] 0.0- 1.0 sec 1.40 MBytes 11.7 Mbits/sec  0.069 ms   0/14671 (0%)<br>[ 3] 1.0- 2.0 sec 1.40 MBytes 11.8 Mbits/sec  0.050 ms   0/14703 (0%)<br>[ 3] 2.0- 3.0 sec 1.40 MBytes 11.8 Mbits/sec  0.052 ms   0/14708 (0%)<br>[ 3] 3.0- 4.0 sec 1.40 MBytes 11.8 Mbits/sec  0.057 ms   0/14704 (0%)<br>[ 3] 4.0- 5.0 sec 1.40 MBytes 11.8 Mbits/sec  0.072 ms   0/14706 (0%)<br>[ 3] 5.0- 6.0 sec 1.40 MBytes 11.8 Mbits/sec  0.075 ms   0/14705 (0%)<br>[ 3] 6.0- 7.0 sec 1.40 MBytes 11.8 Mbits/sec  0.060 ms   0/14707 (0%)<br>[ 3] 7.0- 8.0 sec 1.40 MBytes 11.8 Mbits/sec  0.073 ms   0/14703 (0%)<br>[ 3] 8.0- 9.0 sec 1.40 MBytes 11.8 Mbits/sec  0.073 ms   0/14706 (0%)<br>[ 3] 0.0-10.0 sec 14.0 MBytes 11.8 Mbits/sec  0.064 ms   0/147020 (0%)<br></code></pre></td></tr></table></figure>
@@ -324,7 +324,7 @@
 <p>需要服务端与客户端同时开启 qperf 程序。</p>
 <p>原理：pingpong测试</p>
 <p>tcp_lat：TCP单向延迟</p>
-<img src="/2023/04/13/Linux%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7/image-20230329131135507.png" srcset="/img/loading.gif" lazyload class="" title="image2">
+<img src="/2023/04/13/Linux%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7/image-20230329131135507.png" srcset="/img/loading.gif" lazyload class title="image2">
 
 <p>​					获取网络的带宽和延时性能曲线（消息大小 1byte -&gt; 64K， 每次翻倍，循环获取延迟与带宽）</p>
 <h3 id="6-nmap"><a href="#6-nmap" class="headerlink" title="6. nmap"></a>6. <a target="_blank" rel="noopener" href="https://github.com/nmap/nmap">nmap</a></h3><p>四层主机发现工具</p>
@@ -335,7 +335,7 @@
 <h3 id="8-应用层RTT测量"><a href="#8-应用层RTT测量" class="headerlink" title="8. 应用层RTT测量"></a>8. 应用层RTT测量</h3><p>如http的RTT测量等</p>
 <p>商业工具</p>
 <h3 id="9-albedo-xGenius以太网测试仪"><a href="#9-albedo-xGenius以太网测试仪" class="headerlink" title="9. albedo xGenius以太网测试仪"></a>9. albedo xGenius以太网测试仪</h3><p><a target="_blank" rel="noopener" href="https://www.coolshark.com/products/albedo.html">https://www.coolshark.com/products/albedo.html</a></p>
-<img src="/2023/04/13/Linux%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7/image-20230328100238890.png" srcset="/img/loading.gif" lazyload class="" title="image3">
+<img src="/2023/04/13/Linux%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7/image-20230328100238890.png" srcset="/img/loading.gif" lazyload class title="image3">
 
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以太网延迟测量主要分为2种方式，分别为RTDP与OWDP。</p>
 <ul>
@@ -367,9 +367,9 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
-      
         <a href="/tags/%E7%BD%91%E7%BB%9C/">#网络</a>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
       
     </div>
   
@@ -426,15 +426,15 @@
                   <article class="post-prev col-6">
                     
                     
+                      <a href="/2023/04/13/Linux%E7%BD%91%E7%BB%9C%E5%AD%90%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E8%A7%82%E6%B5%8B%E7%A0%94%E7%A9%B6%E6%8A%A5%E5%91%8A/" title="Linux网络子系统性能观测研究报告">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Linux网络子系统性能观测研究报告</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
                   </article>
                   <article class="post-next col-6">
                     
-                    
-                      <a href="/2023/04/12/hello-world/" title="Hello World">
-                        <span class="hidden-mobile">Hello World</span>
-                        <span class="visible-mobile">下一篇</span>
-                        <i class="iconfont icon-arrowright"></i>
-                      </a>
                     
                   </article>
                 </div>
