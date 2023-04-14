@@ -1,0 +1,947 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="FZY">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="vsomeip与CommonAPI的移植与应用1. vsomeip 交叉编译与安装1.1 说明vsomeip是一个SOME&#x2F;IP开源协议栈。如图1所示，boost库为vsomeip的必须依赖项，因此编译安装vsomeip的前提是将boost依赖库交叉编译完成。   图1 vsomeip编译安装步骤 1.2 安装版本与资源下载本次编译安装的软件版本是boost1.74和vsomeip3.1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="vsomeip与commonAPI的移植与应用">
+<meta property="og:url" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/index.html">
+<meta property="og:site_name" content="聚焦Linux内核与C++中间件">
+<meta property="og:description" content="vsomeip与CommonAPI的移植与应用1. vsomeip 交叉编译与安装1.1 说明vsomeip是一个SOME&#x2F;IP开源协议栈。如图1所示，boost库为vsomeip的必须依赖项，因此编译安装vsomeip的前提是将boost依赖库交叉编译完成。   图1 vsomeip编译安装步骤 1.2 安装版本与资源下载本次编译安装的软件版本是boost1.74和vsomeip3.1">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414132002059.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414132216749.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414144307974.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134333961.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134456367.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134538447.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134804582.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134854586.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414135716470.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414135941356.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414140718046.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414141549265.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414142107302.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414144023413.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414143909525.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414142807201.png">
+<meta property="article:published_time" content="2023-04-14T05:14:30.000Z">
+<meta property="article:modified_time" content="2023-04-14T06:43:17.847Z">
+<meta property="article:author" content="FZY">
+<meta property="article:tag" content="网络">
+<meta property="article:tag" content="原创">
+<meta property="article:tag" content="车载以太网">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://ziyangfu.github.io/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414132002059.png">
+  
+  
+  
+  <title>vsomeip与commonAPI的移植与应用 - 聚焦Linux内核与C++中间件</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ziyangfu.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","app_key":"PXw2Tf5wmgP8pwaWaayNPuiU","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>好好学习， 天天向上</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="vsomeip与commonAPI的移植与应用"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-04-14 13:14" pubdate>
+          2023年4月14日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          11k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          96 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">vsomeip与commonAPI的移植与应用</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="vsomeip与CommonAPI的移植与应用"><a href="#vsomeip与CommonAPI的移植与应用" class="headerlink" title="vsomeip与CommonAPI的移植与应用"></a>vsomeip与CommonAPI的移植与应用</h1><h3 id="1-vsomeip-交叉编译与安装"><a href="#1-vsomeip-交叉编译与安装" class="headerlink" title="1. vsomeip 交叉编译与安装"></a>1. vsomeip 交叉编译与安装</h3><h4 id="1-1-说明"><a href="#1-1-说明" class="headerlink" title="1.1 说明"></a>1.1 说明</h4><p>vsomeip是一个SOME&#x2F;IP开源协议栈。如图1所示，boost库为vsomeip的必须依赖项，因此编译安装vsomeip的前提是将boost依赖库交叉编译完成。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414132002059.png" srcset="/img/loading.gif" lazyload class title="image-20230414132002059">
+
+<p><em>图1 vsomeip编译安装步骤</em></p>
+<h4 id="1-2-安装版本与资源下载"><a href="#1-2-安装版本与资源下载" class="headerlink" title="1.2 安装版本与资源下载"></a>1.2 安装版本与资源下载</h4><p>本次编译安装的软件版本是boost1.74和vsomeip3.1.20。如图2所示。</p>
+<blockquote>
+<p> <a target="_blank" rel="noopener" href="https://boostorg.jfrog.io/ui/native/main/release/1.74.0/source">boost库下载地址</a></p>
+</blockquote>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414132216749.png" srcset="/img/loading.gif" lazyload class title="image-20230414132216749">
+
+<p><em>图2 下载boost库</em></p>
+<p>进入boost压缩包放置文件夹，使用以下指令解压boost压缩包</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -zxvf ./boost1_74_0.tar.gz<br></code></pre></td></tr></table></figure>
+
+<p>打开终端，输入以下指令下载vsomeip源文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git <span class="hljs-built_in">clone</span> https://github.com/GENIVI/vsomeip.git<br></code></pre></td></tr></table></figure>
+
+<h4 id="1-3-交叉编译boost库"><a href="#1-3-交叉编译boost库" class="headerlink" title="1.3 交叉编译boost库"></a>1.3 交叉编译boost库</h4><p>运行 <code>sh ./bootstrap.sh</code>，程序将在boost文件夹生成b2可执行程序和配置文件project-config.jam</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414144307974.png" srcset="/img/loading.gif" lazyload alt="image-20230414144307974" style="zoom:50%;">
+
+<p><em>图3 在终端中运行bootstrap.sh</em></p>
+<p>然后编辑project-config.jam，修改地方有两处，第一处为将工具链设置为S32G处理器的arm64编译工具链；第二处为简化安装，只编译vsomeip所依赖的库，log，thread和system。</p>
+<blockquote>
+<p>tips：请注意空格</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># @file :project-config.jam</span><br><span class="hljs-comment"># ......</span><br><span class="hljs-keyword">if</span> ! gcc <span class="hljs-keyword">in</span> [ feature.values &lt;toolset&gt; ]<br>&#123;<br>    <span class="hljs-comment">#using gcc ;</span><br>    <span class="hljs-comment"># 修改处1:使用S32G的arm-g++编译器</span><br>    <span class="hljs-comment"># 注意空格</span><br>    using gcc : arm  : &lt;your <span class="hljs-built_in">dir</span>&gt;/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-g++ ;  <br>&#125;<br><span class="hljs-comment"># ......</span><br><span class="hljs-comment"># 修改处2：只编译vsomeip需要用到的库，log thread system</span><br>libraries = --with-log --with-thread --with-system ;<br><span class="hljs-comment"># ......</span><br></code></pre></td></tr></table></figure>
+
+<p>运行b2程序</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">./b2 abi=aapcs toolset=gcc-arm<br><span class="hljs-comment"># 最后将boost库安装到你的目标文件夹</span><br><span class="hljs-built_in">mkdir</span> install<br>./b2 install --prefix=./install<br></code></pre></td></tr></table></figure>
+
+<p>安装完成后，install文件夹将包含include与lib两个文件夹。</p>
+<blockquote>
+<p>使用file指令可以查看是否正确编译为arm架构boost库</p>
+</blockquote>
+<h4 id="1-4-交叉编译vsomeip库"><a href="#1-4-交叉编译vsomeip库" class="headerlink" title="1.4 交叉编译vsomeip库"></a>1.4 交叉编译vsomeip库</h4><p>修改CMakeLists.txt，如下所示，也可以将boost库的安装路径添加到环境变量PATH中。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># @file: CMakeList.txt</span><br><br><span class="hljs-comment"># step1 指定boost路径</span><br><span class="hljs-comment"># 修改 cmakelists.txt</span><br><br><span class="hljs-comment"># Boost</span><br><span class="hljs-comment"># 指定 ARM libboost库路径</span><br><span class="hljs-comment"># &lt;PackageName&gt;_ROOT  优先在当前路径下找</span><br><span class="hljs-built_in">set</span>(BOOST_ROOT &lt;your libboost_1.74_installed <span class="hljs-built_in">dir</span>&gt;)<br></code></pre></td></tr></table></figure>
+
+<p>然后将工具链设置为S32G处理器的arm64编译工具链，可以在终端中输入如下指令，临时修改系统默认编译器，这种方法在关闭终端后，需要重新设置。用户也可以修改<code>.bashrc</code>文件来永久将S32G编译器设置为系统默认编译器。使用指令<code>sudo vim ~/.bashrc</code>，然后在bashrc中输入上述指令。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># step2：修改编译器</span><br><span class="hljs-comment"># 在 terminal</span><br><span class="hljs-built_in">export</span> CC=&lt;your <span class="hljs-built_in">dir</span>&gt;/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-gcc<br><span class="hljs-built_in">export</span> CXX=&lt;your <span class="hljs-built_in">dir</span>&gt;/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-g++<br></code></pre></td></tr></table></figure>
+
+<p>cmake编译，编译安装完成后，install文件夹包含 etc， include与lib三个文件夹。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># step3 cmake</span><br><span class="hljs-built_in">mkdir</span> build install<br><span class="hljs-built_in">cd</span> ./build<br>cmake -DENABLE_SIGNAL_HANDLING=1 -DDIAGNOSIS_ADDRESS=0x10 -DCMAKE_INSTALL_PREFIX=./install ..<br><span class="hljs-comment"># step4 make</span><br>make<br></code></pre></td></tr></table></figure>
+
+<p>编译测试例程并测试</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 在helloworld文件夹</span><br>make<br><br><span class="hljs-comment"># 可以通过 file 指令 查看 可执行文件是否为 arm 架构</span><br>file ./hello_world_service<br><span class="hljs-comment"># 结果：</span><br>./hello_world_service: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, <span class="hljs-keyword">for</span> GNU/Linux 3.7.0, with debug_info, not stripped<br></code></pre></td></tr></table></figure>
+
+<h4 id="1-5-S32G开发板例程演示"><a href="#1-5-S32G开发板例程演示" class="headerlink" title="1.5 S32G开发板例程演示"></a>1.5 S32G开发板例程演示</h4><p> 将文件导入开发板有两种方式，用户选择其中之一即可，如图4所示。（scp命令亦可）</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134333961.png" srcset="/img/loading.gif" lazyload class title="image-20230414134333961"> 
+
+<p><em>图4 传输文件的两种方式</em></p>
+<p>通过filezilla传输文件时，连接网线后，输入开发板的IP地址和登录用户名，点击下方的连接即可，如图5。需要注意的是，开发板IP地址和PC的IP地址需要在同一网段。与此同时，建议将需传输文件打包成压缩包，否则可能会出现程序动态链接库强制转换为静态库问题。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134456367.png" srcset="/img/loading.gif" lazyload class title="image-20230414134456367">
+
+<p><em>图5 filezilla连接设置</em></p>
+<p>将boost和vsomeip中的库文件添加到系统 &#x2F;usr&#x2F;lib下，然后分终端同时打开hello_world_service和hello_world_client，运行结果如图6所示。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134538447.png" srcset="/img/loading.gif" lazyload alt="image-20230414134538447" style="zoom:50%;">
+
+<p><em>图6 例程运行结果</em></p>
+<h3 id="2-vsomeip跨设备通信"><a href="#2-vsomeip跨设备通信" class="headerlink" title="2. vsomeip跨设备通信"></a>2. vsomeip跨设备通信</h3><h4 id="2-1-说明"><a href="#2-1-说明" class="headerlink" title="2.1 说明"></a>2.1 说明</h4><p>vsomeip的通信过程如图7所示。在上一节的例程中，服务端与客户端位于同一台主机上，两者的通信过程即图中的左半部分，底层为通过socket完成的进程间通信。本节将简述使用vsomeip进行两台嵌入式linux设备之间的通信例程，演示真正意义上的SOME&#x2F;IP通信。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134804582.png" srcset="/img/loading.gif" lazyload alt="image-20230414134804582" style="zoom:50%;">
+
+<p><em>图7 vsomeip通信过程</em></p>
+<p>本次使用的两台嵌入式设备分别为NXP S32G开发板以及基于NXP iMX8芯片的飞凌嵌入式开发板。S32G作为客户端，iMX8作为服务端。使用一台TP-Link路由器将两者连接，再使用一根网线连接路由器至电脑，如图8所示。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414134854586.png" srcset="/img/loading.gif" lazyload alt="image-20230414134854586" style="zoom:50%;">
+
+<p><em>图8 设备连接图</em></p>
+<h4 id="2-2-IP设置与通信测试"><a href="#2-2-IP设置与通信测试" class="headerlink" title="2.2 IP设置与通信测试"></a>2.2 IP设置与通信测试</h4><p>将各设备分别设置为以下IP地址：</p>
+<ul>
+<li><p>笔记本电脑：192.168.100.50</p>
+</li>
+<li><p>S32G开发板：192.168.100.100</p>
+</li>
+<li><p>iMX8开发板：192.168.100.60</p>
+</li>
+</ul>
+<p>IP地址可通过ifconfig设置。硬件连接与IP地址设置完成后，使用ping和arping指令进行通信测试，然后使用ssh指令分别远程登录2台嵌入式linux设备。</p>
+<h4 id="2-3-vsomeip通信参数设置"><a href="#2-3-vsomeip通信参数设置" class="headerlink" title="2.3 vsomeip通信参数设置"></a>2.3 vsomeip通信参数设置</h4><p>服务端与客户端分别需要配置一个json文件。以iMX8服务端为例，service.json文件如下。其中<code>192.168.100.50</code>为当前嵌入式设备的IP地址。</p>
+<p> “name” : “World”：名称需要与VSOMEIP_APPLICATION_NAME读入的名称一致，注意不是程序文件名称。</p>
+<p>“service” : “0x1234”, “instance” : “0x5678” ：需要与程序中的地址对应。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;unicast&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;192.168.100.50&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;logging&quot;</span> <span class="hljs-punctuation">:</span><br>    <span class="hljs-punctuation">&#123;</span> <br>        <span class="hljs-attr">&quot;level&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;debug&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;console&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;file&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span> <span class="hljs-attr">&quot;enable&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;false&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;path&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/tmp/vsomeip.log&quot;</span> <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;dlt&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;false&quot;</span><br>    <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;applications&quot;</span> <span class="hljs-punctuation">:</span> <br>    <span class="hljs-punctuation">[</span><br>        <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;name&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;World&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;id&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;0x1212&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;services&quot;</span> <span class="hljs-punctuation">:</span><br>    <span class="hljs-punctuation">[</span><br>        <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;service&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;0x1234&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;instance&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;0x5678&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;unreliable&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;30509&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;routing&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;World&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;service-discovery&quot;</span> <span class="hljs-punctuation">:</span><br>    <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;enable&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;multicast&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;224.224.224.245&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;port&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;30490&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;protocol&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;udp&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;initial_delay_min&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;10&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;initial_delay_max&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;100&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;repetitions_base_delay&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;200&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;repetitions_max&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;3&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;ttl&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;3&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;cyclic_offer_delay&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2000&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;request_response_delay&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;1500&quot;</span><br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>为了方便运行，可以参考如下写一个快速运行的脚本。<code>touch run_service.sh</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># @file: run_service.sh</span><br><span class="hljs-comment"># run vsomeip service</span><br><span class="hljs-comment"># set multicast</span><br>sudo route add -nv 224.224.224.245 dev enxd03745a6a072<br><span class="hljs-built_in">export</span> VSOMEIP_CONFIGURATION=./service.json<br><span class="hljs-built_in">export</span> VSOMEIP_APPLICATION_NAME=World<br>./response-sample<br></code></pre></td></tr></table></figure>
+
+<p>其中，第一行的作用为设置多播地址，enxd03745a6a072为设备网卡名称，通过ifconfig查看，并做对应修改。</p>
+<h4 id="2-4-实例演示"><a href="#2-4-实例演示" class="headerlink" title="2.4 实例演示"></a>2.4 实例演示</h4><p>在服务端终端中输入 <code>sudo sh ./run_service.sh</code>启动vsomeip服务端程序。类似的在另一个设备中启动客户端程序。需要传输的数据自行在程序中设定，本程序运行结果如下。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414135716470.png" srcset="/img/loading.gif" lazyload alt="image-20230414135716470" style="zoom:70%;">
+
+<p><em>图9 程序运行结果</em></p>
+<h3 id="3-commonAPI交叉编译与安装"><a href="#3-commonAPI交叉编译与安装" class="headerlink" title="3. commonAPI交叉编译与安装"></a>3. commonAPI交叉编译与安装</h3><h4 id="3-1-说明"><a href="#3-1-说明" class="headerlink" title="3.1 说明"></a>3.1 说明</h4><p>CommonAPI是一个开源的RPC（远程过程调用）框架，其封装了底层通信协议，使得上层应用接口与底层通信协议解耦，具体原理可参考官方文档。目前底层可以支持SOME&#x2F;IP和D-Bus两种协议，本文进行底层为SOME&#x2F;IP协议的CommonAPI编译安装与演示。</p>
+<p>整体编译安装过程如图10所示，首先通过官方提供的代码生成器commonapi_core_generator和commonapi_someip_generator将FDL接口描述文件转换为C++文件，此步在X86_64平台上完成；然后将boost、vsomeip、capicxx-core-runtime以及capicxx-someip-runtime交叉编译至ARM64平台上；最后借助ARM交叉编译工具链，即可编译出可在S32G开发板上运行的程序。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414135941356.png" srcset="/img/loading.gif" lazyload alt="image-20230414135941356" style="zoom:50%;">
+
+<p><em>图10 交叉编译安装CommonAPI流程</em></p>
+<h4 id="3-2-安装版本与资源下载"><a href="#3-2-安装版本与资源下载" class="headerlink" title="3.2 安装版本与资源下载"></a>3.2 安装版本与资源下载</h4><table>
+<thead>
+<tr>
+<th>时间</th>
+<th>2021-08-25</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>安装软件版本</td>
+<td>capicxx-core-runtime 版本 3.2.0<br>capicxx-someip-runtime 版本 3.2.0<br>commonapi_core_generator 版本 3.2.0.1<br>commonapi_someip_generator 版本 3.2.0.1<br>vsomeip 3.1.20.3</td>
+</tr>
+</tbody></table>
+<p>下载地址：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/GENIVI/capicxx-core-runtime">capicxx-core-runtime</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/GENIVI/capicxx-someip-runtime">capicxx-someip-runtime</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/GENIVI/capicxx-core-tools/releases/tag/3.2.0.1">capicxx-core-tools</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/GENIVI/capicxx-someip-tools/releases">capicxx-someip-tools</a></li>
+</ul>
+<h4 id="3-3-交叉编译capicxx-core-runtime"><a href="#3-3-交叉编译capicxx-core-runtime" class="headerlink" title="3.3 交叉编译capicxx-core-runtime"></a>3.3 交叉编译capicxx-core-runtime</h4><p>首先需要设置交叉编译工具链，如下。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">export</span> CC=&lt;S32G编译器目录&gt;/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-gcc<br><span class="hljs-built_in">export</span> CXX=&lt;S32G编译器目录&gt;/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-g++<br></code></pre></td></tr></table></figure>
+
+<p>然后进行构建，如下。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> build arm64_core_install<br><span class="hljs-built_in">cd</span> build<br>cmake -DCMAKE_INSTALL_PREFIX=../arm64_core_install ..<br>make<br>sudo make install<br></code></pre></td></tr></table></figure>
+
+<p>编译完成后，使用tree指令查看arm64_core_install文件下，如下。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414140718046.png" srcset="/img/loading.gif" lazyload class title="image-20230414140718046">
+
+<p><em>图11 install目录</em></p>
+<h4 id="3-4-交叉编译capicxx-someip-runtime"><a href="#3-4-交叉编译capicxx-someip-runtime" class="headerlink" title="3.4 交叉编译capicxx-someip-runtime"></a>3.4 交叉编译capicxx-someip-runtime</h4><p>capicxx-someip-runtime依赖于boost库与vsomeip库，因此需要修改CMakeLists.txt文件，使之可以顺利找到交叉编译完成的boost和vsomeip库。参照1.3节及1.4节。</p>
+<p>然后进行构建，如下。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> build arm64_someip_install<br><span class="hljs-built_in">cd</span> build<br>cmake -DCMAKE_INSTALL_PREFIX=../arm64_someip_install ..<br>make<br>sudo make install<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-5-安装Java环境"><a href="#3-5-安装Java环境" class="headerlink" title="3.5 安装Java环境"></a>3.5 安装Java环境</h4><p>commonapi_core_generator和commonapi_someip_generator代码生成器依赖于JAVA8环境，因此首先需要安装jdk，在终端中输入下述指令。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">sudo apt install openjdk-8-jdk<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>使用 java -version可以查看当前安装的java版本，若已安装高版本java，请降级，高版本java会导致代码生成出错。仅针对目前安装版本</p>
+</blockquote>
+<h4 id="3-6-S32G开发板例程演示"><a href="#3-6-S32G开发板例程演示" class="headerlink" title="3.6 S32G开发板例程演示"></a>3.6 S32G开发板例程演示</h4><p>本例程为helloworld演示。建立helloworld例程目录如下，将代码生成器<code>commonapi_core_generator</code>和<code>commonapi_someip_generator</code>放置在cgen文件夹下，新建<code>HelloWorld.fidl</code>和<code>HelloWorld.fdel</code>文件并放置于fidl文件，src-gen文件夹在运行代码生成器后自动生成，相关信息参考图12。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414141549265.png" srcset="/img/loading.gif" lazyload class title="image-20230414141549265">
+
+<p><em>图12 helloworld例程目录释义</em></p>
+<ul>
+<li>FDL文件代码生成</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># @file: HelloWorld.fidl</span><br>package commonapi<br>interface HelloWorld &#123;<br>  version &#123;major 1 minor 0&#125;<br>  method sayHello &#123;<br>    <span class="hljs-keyword">in</span> &#123;<br>      String name<br>    &#125;<br>    out &#123;<br>      String message<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># @file: HelloWorld.fdel</span><br>import <span class="hljs-string">&quot;platform:/plugin/org.genivi.commonapi.someip/deployment/CommonAPI-SOMEIP_deployment_spec.fdepl&quot;</span><br>import <span class="hljs-string">&quot;HelloWorld.fidl&quot;</span><br>define org.genivi.commonapi.someip.deployment <span class="hljs-keyword">for</span> interface commonapi.HelloWorld &#123;<br>	SomeIpServiceID = 4660<br>	method sayHello &#123;<br>		SomeIpMethodID = 123<br>	&#125;<br>&#125;<br><span class="hljs-comment"># 官方例程有误，按照如下修改</span><br>define org.genivi.commonapi.someip.deployment <span class="hljs-keyword">for</span> provider as MyService &#123;<br>	instance commonapi.HelloWorld &#123;<br>		InstanceId = <span class="hljs-string">&quot;test&quot;</span><br>		SomeIpInstanceID = 22136<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>代码生成器commonapi_core_generator目录如图13所示，可根据平台选择对应的生成器，64位ubuntu选择commonapi-core-generator-linux-x86_64。然后运行如下指令，生成C++代码。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">./commonapi_core_generator/commonapi-core-generator-linux-x86_64 -sk ./fidl/HelloWorld.fidl<br>./commonapi_someip_generator/commonapi-someip-generator-linux-x86_64 ./fidl/HelloWorld.fdepl<br></code></pre></td></tr></table></figure>
+
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414142107302.png" srcset="/img/loading.gif" lazyload class title="image-20230414142107302">
+
+<p><em>图13 commonapi_core_generator目录</em></p>
+<ul>
+<li>指定交叉编译工具链</li>
+</ul>
+<p>修改CMakeLists.txt，如图14所示。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414144023413.png" srcset="/img/loading.gif" lazyload alt="image-20230414144023413" style="zoom:50%;">
+
+<p><em>图14 helloworld CMakeLists.txt文件</em></p>
+<p>修改arm_linux_setup.cmake，ARM_DIR等针对修改。</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414143909525.png" srcset="/img/loading.gif" lazyload class title="image-20230414143909525">
+
+<p><em>图15 helloworld arm_linux_setup.cmake文件</em></p>
+<ul>
+<li>可执行文件生成及运行</li>
+</ul>
+<p>安装如下指令构建可执行文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> build<br>cmake -DCMAKE_TOOLCHAIN_FILE=../arm_linux_setup.cmake ..<br><span class="hljs-comment">#若上述指令提示无法找到boost库，可换用export C和CXX方式，然后再# 执行cmake</span><br>cmake..<br>make<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>可使用file指令查看可执行文件类型信息</p>
+</blockquote>
+<p>将文件传输至开发板中，并将编译好的库文件添加到开发板 &#x2F;usr&#x2F;lib文件夹中，然后分终端同时打开HelloWorldService和HelloWorldClient，运行结果如图14所示</p>
+<img src="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/image-20230414142807201.png" srcset="/img/loading.gif" lazyload alt="image-20230414142807201" style="zoom:50%;">
+
+<p><em>图14 helloworld运行结果</em></p>
+<h3 id="4-问题及解决方案"><a href="#4-问题及解决方案" class="headerlink" title="4. 问题及解决方案"></a>4. 问题及解决方案</h3><p>本节将记录在vsomeip和commonAPI的安装编译过程中，碰到的一些问题及对应的解决方案，仅供参考。</p>
+<ul>
+<li><strong>可执行文件生成及运行X86-64环境下安装libboost库时的boost版本问题</strong></li>
+</ul>
+<p>vsomeip官方安装文档过旧，ubuntu20.04源中boost版本已经更新，不能直接使用文档中的指令。解决方案有两个，其一是在boost库中下载对应版本，编译运行；其二则是在终端中使用 <code>sudo apt-cache search libboost</code> 查找新版本并安装。 </p>
+<ul>
+<li><strong>在终端中 “ctrl+c” 停止vsomeip程序后，再次启动程序，提示vsomeip无法初始化成功</strong></li>
+</ul>
+<p>原因是在停止程序后，<code>/tmp/vsomeip.lck</code>没有被正确删除。解决方案有以下几种，其一是手动删除与&#x2F;tmp文件下与vsomeip相关的内容；其二是关闭shell，在重新打开；最后是在安装vsomeip时，cmake阶段使能<code>ENABLE_SIGNAL_HANDLING</code>，这一步在前述安装指南中已默认操作。</p>
+<ul>
+<li><strong>启动vsomeip，程序报 <code>configuration module could not be load</code> 错误</strong></li>
+</ul>
+<p>其原因是新安装vsomeip后 ，没有在动态链接库配置目录中创建连接及缓存文件，可以使用 <code>sudo ldconfig</code> 命令刷新库缓存。</p>
+<ul>
+<li><p><strong>CMakeList中 <code>find_package()</code> 提示找不到vsomeip包</strong></p>
+<p>其原因是vsomeip3.x版本后，包名变更为vsomeip3，因此可使用 <code>find_package(vsomeip3 REQUIRED)</code></p>
+</li>
+<li><p><strong>CommonAPI中，使用代码生成器无法将FDL文件转换为C++代码，或者转换后，工程无法编译通过</strong></p>
+</li>
+</ul>
+<p>其原因是CommonAPI C++代码生成器与CommonAPI runtime的版本不匹配，此原因非常隐蔽，程序不会给出任何关于此方面的提示。解决方案是不要在GENIVI官网下载，去github上均下载最新版本。</p>
+<ul>
+<li><strong>CommonAPI官方例程中，FDL接口描述文件出错，无法顺利生成C++代码</strong></li>
+</ul>
+<p>原因是例程FDL文件中语法有误，按照前述文档中红色标记代码修改。</p>
+<ul>
+<li><strong>CommonAPI Java版本问题</strong></li>
+</ul>
+<p>目前CommonAPI代码生成器只支持java8环境，若安装java高版本，则需要手动降级，相关教程可参考：</p>
+<p><a target="_blank" rel="noopener" href="https://docs.datastax.com/en/jdk-install/doc/jdkinstall/installOpenJdkDeb.html">请点击</a></p>
+<ul>
+<li><strong>CommonAPI 直接运行例程，无法通过cmake生成makefile</strong></li>
+</ul>
+<p>CMakeLists.txt附加了需要D-Bus相关内容，而系统中未安装，可以对应修改删减CMakeLists.txt，也可参考如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># @file: example_E2，Attributes，CMakeLists</span><br>cmake_minimum_required(VERSION 2.8)<br><span class="hljs-built_in">set</span>(PRJ_NAME E02Attributes)<br>project(PRJ_NAME)<br><span class="hljs-built_in">set</span>(CMAKE_CXX_FLAGS <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CMAKE_CXX_FLAGS&#125;</span> -pthread -std=c++0x&quot;</span>)<br>include_directories(<br>  src-gen<br>  /usr/local/include/CommonAPI-3.2<br>  /usr/local/include/vsomeip<br>  <span class="hljs-variable">$&#123;COMMONAPI_INCLUDE_DIRS&#125;</span><br>  <span class="hljs-variable">$&#123;COMMONAPI_SOMEIP_INCLUDE_DIRS&#125;</span><br>  <span class="hljs-variable">$&#123;DBus_INCLUDE_DIRS&#125;</span><br>  <span class="hljs-variable">$&#123;VSOMEIP_INCLUDE_DIRS&#125;</span><br>)<br>link_directories(<br>  /usr/local/lib<br>)<br><span class="hljs-comment"># 找包</span><br>find_package(CommonAPI 3.2.0 REQUIRED CONFIG NO_CMAKE_PACKAGE_REGISTRY)<br>find_package(CommonAPI-SomeIP 3.2.0 REQUIRED)<br>find_package(vsomeip3 3.1.0 REQUIRED)<br><span class="hljs-comment"># Source Files </span><br><span class="hljs-built_in">set</span>(PRJ_SRC_PATH src)<br><span class="hljs-built_in">set</span>(PRJ_SRC_GEN_PATH src-gen)<br><span class="hljs-built_in">set</span>(PRJ_SRC_GEN_COMMONAPI_PATH <span class="hljs-variable">$&#123;PRJ_SRC_GEN_PATH&#125;</span>/v1/commonapi/examples) <br><span class="hljs-built_in">set</span>(PRJ_NAME_CLIENT <span class="hljs-variable">$&#123;PRJ_NAME&#125;</span>Client)<br><span class="hljs-built_in">set</span>(PRJ_NAME_SERVICE <span class="hljs-variable">$&#123;PRJ_NAME&#125;</span>Service)<br><span class="hljs-comment"># Application</span><br>FILE(GLOB PRJ_PROXY_GEN_SRCS <span class="hljs-variable">$&#123;PRJ_SRC_GEN_COMMONAPI_PATH&#125;</span>/*Proxy.cpp)<br>FILE(GLOB PRJ_STUB_GEN_SRCS <span class="hljs-variable">$&#123;PRJ_SRC_GEN_COMMONAPI_PATH&#125;</span>/*Stub*.cpp)<br>FILE(GLOB PRJ_STUB_IMPL_SRCS <span class="hljs-variable">$&#123;PRJ_SRC_PATH&#125;</span>/*Stub*.cpp)<br><span class="hljs-built_in">set</span>(PRJ_CLIENT_SRCS <span class="hljs-variable">$&#123;PRJ_SRC_PATH&#125;</span>/<span class="hljs-variable">$&#123;PRJ_NAME_CLIENT&#125;</span>.cpp <span class="hljs-variable">$&#123;PRJ_PROXY_GEN_SRCS&#125;</span>)<br><span class="hljs-built_in">set</span>(PRJ_SERVICE_SRCS <span class="hljs-variable">$&#123;PRJ_SRC_PATH&#125;</span>/<span class="hljs-variable">$&#123;PRJ_NAME_SERVICE&#125;</span>.cpp <span class="hljs-variable">$&#123;PRJ_SRC_PATH&#125;</span>/<span class="hljs-variable">$&#123;PRJ_NAME&#125;</span>StubImpl.cpp <span class="hljs-variable">$&#123;PRJ_STUB_GEN_SRCS&#125;</span> <span class="hljs-variable">$&#123;PRJ_STUB_IMPL_SRCS&#125;</span>)<br><span class="hljs-comment"># 链接库名</span><br><span class="hljs-built_in">set</span>(LINK_LIBRARIES CommonAPI CommonAPI-SomeIP vsomeip3)<br><span class="hljs-comment"># Build Client</span><br>add_executable(<span class="hljs-variable">$&#123;PRJ_NAME_CLIENT&#125;</span> <span class="hljs-variable">$&#123;PRJ_CLIENT_SRCS&#125;</span>)<br>target_link_libraries(<span class="hljs-variable">$&#123;PRJ_NAME_CLIENT&#125;</span> <span class="hljs-variable">$&#123;LINK_LIBRARIES&#125;</span>)<br><span class="hljs-comment"># Build service</span><br>add_executable(<span class="hljs-variable">$&#123;PRJ_NAME_SERVICE&#125;</span> <span class="hljs-variable">$&#123;PRJ_SERVICE_SRCS&#125;</span>)<br>target_link_libraries(<span class="hljs-variable">$&#123;PRJ_NAME_SERVICE&#125;</span> <span class="hljs-variable">$&#123;LINK_LIBRARIES&#125;</span>)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>可执行文件传输问题</strong></li>
+</ul>
+<p>如前所述，可执行文件通过filezilla直接传输文件时，会不明原因的将动态链接库转换为静态链接库，运行时提示“格式错误”。使用file指令查看时，可发现如下差异。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># A 使用压缩包传输</span><br>ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=0c126f1b17601d33513b52c02a5e63358d912512, <span class="hljs-keyword">for</span> GNU/Linux 3.14.0, with debug_info, not stripped<br><span class="hljs-comment"># B 直接传输</span><br>ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), statically linked, interpreter *empty*, stripped<br></code></pre></td></tr></table></figure>
+
+<p>解决方案则是使用压缩包传输或者直接通过TF卡拷贝。</p>
+<ul>
+<li><strong>部分网络经验</strong></li>
+</ul>
+<p>在编写fdepl文件时，要先写attribute，在写method，再写broadcast，不能像fidl文件，穿插着写，否则编译不过。</p>
+<p>在运行程序时，有时候会遇到无法连接的问题，需要把 <code>/tmp/vsomeip-0 </code>这一系列文件删除，否则无法连接。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E7%BD%91%E7%BB%9C/">#网络</a>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
+      
+        <a href="/tags/%E8%BD%A6%E8%BD%BD%E4%BB%A5%E5%A4%AA%E7%BD%91/">#车载以太网</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>vsomeip与commonAPI的移植与应用</div>
+      <div>http://ziyangfu.github.io/2023/04/14/vsomeip与commonAPI的移植与应用/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>FZY</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年4月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/04/14/vsomeip%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E8%B7%A8%E7%BD%91%E6%AE%B5%E9%80%9A%E4%BF%A1/" title="vsomeip如何进行跨网段通信">
+                        <span class="hidden-mobile">vsomeip如何进行跨网段通信</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","appKey":"PXw2Tf5wmgP8pwaWaayNPuiU","path":"window.location.pathname","placeholder":"说点什么吧","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
