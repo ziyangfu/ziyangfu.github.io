@@ -1,0 +1,855 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="FZY">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="ARM64架构Linux内核启动过程分析（上） Linux内核版本：5.10.90 硬件：NXP S32G-VNP-RDB2 (4 * A53，ARM64)    1. ROM code从外部设备（串口、网络、NAND flash、USB磁盘设备或者其他磁盘设备）加载 Linux bootloader。 2. BootLoader 初始化系统中的RAM并将RAM的信息告知kernel 准备好dev">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ARM64架构Linux内核启动过程分析_上">
+<meta property="og:url" content="http://ziyangfu.github.io/2023/04/14/ARM64%E6%9E%B6%E6%9E%84Linux%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90_%E4%B8%8A/index.html">
+<meta property="og:site_name" content="聚焦Linux内核与C++中间件">
+<meta property="og:description" content="ARM64架构Linux内核启动过程分析（上） Linux内核版本：5.10.90 硬件：NXP S32G-VNP-RDB2 (4 * A53，ARM64)    1. ROM code从外部设备（串口、网络、NAND flash、USB磁盘设备或者其他磁盘设备）加载 Linux bootloader。 2. BootLoader 初始化系统中的RAM并将RAM的信息告知kernel 准备好dev">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/14/ARM64%E6%9E%B6%E6%9E%84Linux%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90_%E4%B8%8A/image-20230414155940183.png">
+<meta property="article:published_time" content="2023-04-14T07:51:30.000Z">
+<meta property="article:modified_time" content="2023-04-14T08:51:22.831Z">
+<meta property="article:author" content="FZY">
+<meta property="article:tag" content="原创">
+<meta property="article:tag" content="Linux内核">
+<meta property="article:tag" content="ARM64">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://ziyangfu.github.io/2023/04/14/ARM64%E6%9E%B6%E6%9E%84Linux%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90_%E4%B8%8A/image-20230414155940183.png">
+  
+  
+  
+  <title>ARM64架构Linux内核启动过程分析_上 - 聚焦Linux内核与C++中间件</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ziyangfu.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","app_key":"PXw2Tf5wmgP8pwaWaayNPuiU","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>好好学习， 天天向上</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="ARM64架构Linux内核启动过程分析_上"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-04-14 15:51" pubdate>
+          2023年4月14日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          16k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          135 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">ARM64架构Linux内核启动过程分析_上</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="ARM64架构Linux内核启动过程分析（上）"><a href="#ARM64架构Linux内核启动过程分析（上）" class="headerlink" title="ARM64架构Linux内核启动过程分析（上）"></a>ARM64架构Linux内核启动过程分析（上）</h1><ul>
+<li>Linux内核版本：5.10.90</li>
+<li>硬件：NXP S32G-VNP-RDB2 (4 * A53，ARM64)</li>
+</ul>
+<img src="/2023/04/14/ARM64%E6%9E%B6%E6%9E%84Linux%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90_%E4%B8%8A/image-20230414155940183.png" srcset="/img/loading.gif" lazyload alt="image-20230414155940183" style="zoom:67%;">
+
+<h2 id="1-ROM-code"><a href="#1-ROM-code" class="headerlink" title="1. ROM code"></a>1. ROM code</h2><p>从外部设备（串口、网络、NAND flash、USB磁盘设备或者其他磁盘设备）加载 Linux bootloader。</p>
+<h2 id="2-BootLoader"><a href="#2-BootLoader" class="headerlink" title="2. BootLoader"></a>2. BootLoader</h2><ul>
+<li>初始化系统中的RAM并将RAM的信息告知kernel</li>
+<li>准备好device tree blob的信息并将dtb的首地址告知kernel</li>
+<li>解压内核（可选）</li>
+<li>加载Linux内核,将控制权转交给内核</li>
+</ul>
+<p>在跳入内核之前，必须满足以下条件：</p>
+<ul>
+<li>停止所有支持 DMA 的设备，这样内存就不会被占用被伪造的网络数据包或磁盘数据损坏。</li>
+<li>主 CPU 通用寄存器设置<br>x0 &#x3D; 系统 RAM 中设备树 blob (dtb) 的物理地址。<br>x1 &#x3D; 0（留作将来使用）<br>x2 &#x3D; 0（留作将来使用）<br>x3 &#x3D; 0（留作将来使用）</li>
+<li>CPU模式<br>所有形式的中断都必须在 PSTATE.DAIF (Debug,  SError, IRQ 和 FIQ）。<br>CPU 必须处于 EL2 中（推荐以便访问虚拟化扩展）或非安全 EL1。</li>
+<li>缓存、MMU<br>MMU 必须关闭。<br>指令缓存可能打开或关闭。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># @file: arch/arm64/kernel/head.S</span><br><span class="hljs-comment"># 内存管理单元关闭，数据缓存关闭，指令缓存可开可闭</span><br>The requirements are:<br>   MMU = off, D-cache = off, I-cache = on or off,<br>   x0 = physical address to the FDT blob.<br>   <br><span class="hljs-comment"># bootloader为了性能，很可能是打开了MMU以及各种cache，</span><br><span class="hljs-comment"># 只是在进入kernel的时候，受限于ARM64 boot protocol而将CPU以及cache、</span><br><span class="hljs-comment"># MMU等硬件状态设定为指定的状态。因此，实际上这时候，instruction cache</span><br><span class="hljs-comment"># 以及TLB中很可能有残留的数据，因此后续需要将其清除</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="3-Linux内核启动"><a href="#3-Linux内核启动" class="headerlink" title="3. Linux内核启动"></a>3. Linux内核启动</h2><h3 id="3-1-Linux内核从哪里启动"><a href="#3-1-Linux内核从哪里启动" class="headerlink" title="3.1 Linux内核从哪里启动"></a>3.1 Linux内核从哪里启动</h3><p>Linux内核的image有以下几种形式，目前开发板使用未压缩的image。</p>
+<ul>
+<li>vmlinux：<strong>原始内核文件</strong>，可引导的、未压缩、可压缩的内核镜像，ELF格式</li>
+<li>image：<strong>未压缩</strong>，调用 objcopy -o binary生成原始二进制文件，本质是将符号与重定位信息舍弃，只剩二进制数据。</li>
+<li>zImage：<strong>压缩</strong>，二进制文件+gzip压缩</li>
+</ul>
+<p>欲知Linux内核的startup entry， 最简单的办法是网上查看相关文章，而且启动点有<code>Kernel startup entry point</code>的注释，可以通过搜索找到head.S文件。</p>
+<p>本文尝试通过反汇编 vmlinux，查找Linux内核运行的第一条指令，然后通过第一条指令找到Linux内核启动点。</p>
+<h4 id="3-1-1-反汇编vmlinux查找Linux内核启动点"><a href="#3-1-1-反汇编vmlinux查找Linux内核启动点" class="headerlink" title="3.1.1 反汇编vmlinux查找Linux内核启动点"></a>3.1.1 反汇编vmlinux查找Linux内核启动点</h4><p>首先查看 vmlinux ELF header，可知 入口地址为 <code>0xffffffc010000000</code></p>
+<blockquote>
+<p>ps:<br>入口地址在哪里设置？<br>offset（TEXT_OFFSET），偏移 256MB</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">fzy@fzy-Lenovo:~/Documents/05_NXP_S32G/linux_kernel$ readelf -h ./vmlinux<br>ELF Header:<br>Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 <br>Class:                             ELF64<br>OS/ABI:                            UNIX - System V<br>Machine:                           AArch64<br>Entry point address:               0xffffffc010000000<br></code></pre></td></tr></table></figure>
+
+<p>反编译 vmlinux。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">&lt;path to&gt;/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-objdump -dxh ./vmlinux &gt; ./vmlinux.S<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># @file: vmlinux.S</span><br><span class="hljs-comment"># 符号表</span><br>SYMBOL TABLE:<br>ffffffc010000000 l    d  .head.text     0000000000000000 .head.text<br>......<br>0000000000000000 l    <span class="hljs-built_in">df</span> *ABS*  0000000000000000 <span class="hljs-built_in">arch</span>/arm64/kernel/head.o<br>ffffffc010000000 l       .head.text     0000000000000000 _head<br>ffffffc010b40020 l       .init.text     0000000000000020 preserve_boot_args<br><span class="hljs-comment"># ------------------------------------------------------------</span><br>Disassembly of section .head.text:<br><br>ffffffc010000000 &lt;_text&gt;:<br>ffffffc010000000:       142d0000        b       ffffffc010b40000 &lt;primary_entry&gt;<br>        ...<br>ffffffc010000010:       00d70000        .word   0x00d70000<br>ffffffc010000014:       00000000        .word   0x00000000<br>ffffffc010000018:       0000000a        .word   0x0000000a<br>        ...<br>ffffffc010000038:       644d5241        .word   0x644d5241<br>ffffffc01000003c:       00000000        .word   0x00000000<br><br></code></pre></td></tr></table></figure>
+
+<p>从 vmlinux.S可知，内核启动的第一条指令是：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">ffffffc010000000:       142d0000        b       ffffffc010b40000 &lt;primary_entry&gt;<br></code></pre></td></tr></table></figure>
+
+<p>对应的section为：<code>.head.text_text</code>,，同时还能看到 <code>arch/arm64/kernel/head.o</code>， head.o的源文件为head.S。</p>
+<p>由此我们可知，程序从<code>arch/arm64/kernel/head.S</code>处开始运行，且第一条指令为 <code>b	primary_entry</code></p>
+<blockquote>
+<p>查看<code>System.map</code>也可以知道启动点</p>
+<p>ffffffc010000000 t _head<br>ffffffc010000000 T _text</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// @file: arch/arm64/kernel/head.S</span><br><span class="hljs-comment">/*</span><br><span class="hljs-comment">* Kernel startup entry point.</span><br><span class="hljs-comment">* ---------------------------</span><br><span class="hljs-comment">*/</span><br>__HEAD<br>    _head:<br><span class="hljs-comment">/*</span><br><span class="hljs-comment">* DO NOT MODIFY. Image header expected by Linux boot-loaders.</span><br><span class="hljs-comment">*/</span><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_EFI</span><br><span class="hljs-comment">/*</span><br><span class="hljs-comment">* This add instruction has no meaningful effect except that</span><br><span class="hljs-comment">* its opcode forms the magic &quot;MZ&quot; signature required by UEFI.</span><br><span class="hljs-comment">*/</span><br>add	x13, x18, #<span class="hljs-number">0x16</span><br>b	primary_entry<br><span class="hljs-meta">#<span class="hljs-keyword">else</span></span><br>b	primary_entry			<span class="hljs-comment">// branch to kernel start, magic 从这里开始,跳转</span><br>.<span class="hljs-type">long</span>	<span class="hljs-number">0</span>				<span class="hljs-comment">// reserved</span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+
+<p>注意，我们确实没有设置CONFIG_EFI。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># Boot options </span><br><span class="hljs-comment"># </span><br>CONFIG_CMDLINE=<span class="hljs-string">&quot;console=ttyLF0&quot;</span> <br><span class="hljs-comment"># CONFIG_CMDLINE_FORCE is not set </span><br><span class="hljs-comment"># CONFIG_EFI is not set    # 我们确实没有设置CONFIG_EFI</span><br><span class="hljs-comment"># end of Boot options</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-2-第一阶段（汇编语言）"><a href="#3-2-第一阶段（汇编语言）" class="headerlink" title="3.2 第一阶段（汇编语言）"></a>3.2 第一阶段（汇编语言）</h3><h4 id="3-2-1-primary-entry"><a href="#3-2-1-primary-entry" class="headerlink" title="3.2.1 primary_entry"></a>3.2.1 primary_entry</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// @file: arch/arm64/kernel/head.S</span><br><span class="hljs-comment">// 105 行</span><br>SYM_CODE_START(primary_entry)<br>    bl	preserve_boot_args<br>    bl	el2_setup			<span class="hljs-comment">// Drop to EL1, w0=cpu_boot_mode</span><br>    adrp	x23, __PHYS_OFFSET<br>    and	x23, x23, MIN_KIMG_ALIGN - <span class="hljs-number">1</span>	<span class="hljs-comment">// KASLR offset, defaults to 0</span><br>    bl	set_cpu_boot_mode_flag<br>    bl	__create_page_tables<br>    <span class="hljs-comment">/*</span><br><span class="hljs-comment">    * The following calls CPU setup code, see arch/arm64/mm/proc.S for</span><br><span class="hljs-comment">    * details.</span><br><span class="hljs-comment">    * On return, the CPU will be ready for the MMU to be turned on and</span><br><span class="hljs-comment">    * the TCR will have been set.</span><br><span class="hljs-comment">    */</span><br>    bl	__cpu_setup			<span class="hljs-comment">// initialise processor</span><br>    b	__primary_switch<br><span class="hljs-title function_">SYM_CODE_END</span><span class="hljs-params">(primary_entry)</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-2-preserve-boot-args"><a href="#3-2-2-preserve-boot-args" class="headerlink" title="3.2.2 preserve_boot_args"></a>3.2.2 preserve_boot_args</h4><p>功能：保存从bootloader传递过来的x0 ~ x3寄存器这四个寄存器</p>
+<ul>
+<li><p>ARM64 boot protocol对这4个寄存器严格限制。x0保存dtb物理地址，x1~x3 &#x3D; 0。x0是boot_args这段内存的首地址，X1是末地址。后续setup_arch函数会访问boot_args，并进行校验。</p>
+</li>
+<li><p>使用DMB来保证stp指令在dc ivac指令之前执行完成</p>
+</li>
+<li><p>将boot_args变量对应的cache line进行清除并设置无效</p>
+</li>
+</ul>
+<blockquote>
+<p>关于 __inval_dcache_area，可参考：<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v5.10.90/source/arch/arm64/mm/cache.S#L142">&#x2F;arch&#x2F;arm64&#x2F;mm&#x2F;cache.S</a><br>Ensure that any D-cache lines for the interval [kaddr, kaddr+size)are invalidated. Any partial lines at the ends of the interval are also cleaned to PoC to prevent data loss</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/*</span><br><span class="hljs-comment">* Preserve the arguments passed by the bootloader in x0 .. x3</span><br><span class="hljs-comment">*/</span><br>SYM_CODE_START_LOCAL(preserve_boot_args)<br>    mov	x21, x0				<span class="hljs-comment">// x21=FDT   // 将dtb的地址暂存在x21寄存器，释放出x0使用</span><br>    <span class="hljs-comment">// x0保存boot_args变量的地址</span><br>    adr_l	x0, boot_args			<span class="hljs-comment">// record the contents of</span><br>    stp	x21, x1, [x0]			<span class="hljs-comment">// x0 .. x3 at kernel entry</span><br>    stp	x2, x3, [x0, #<span class="hljs-number">16</span>]<br>    <br>    dmb	sy				<span class="hljs-comment">// needed before dc ivac with</span><br>    <span class="hljs-comment">// MMU off</span><br>    <br>    mov	x1, #<span class="hljs-number">0x20</span>			<span class="hljs-comment">// 4 x 8 bytes</span><br>    b	__inval_dcache_area		<span class="hljs-comment">// tail call</span><br>    SYM_CODE_END(preserve_boot_args)<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-3-el2-setup"><a href="#3-2-3-el2-setup" class="headerlink" title="3.2.3 el2_setup"></a>3.2.3 <a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v5.10.90/C/ident/el2_setup">el2_setup</a></h4><p>若处于EL2模式，需要将CPU退回EL1</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/*</span><br><span class="hljs-comment">* If we&#x27;re fortunate enough to boot at EL2, ensure that the world is</span><br><span class="hljs-comment">* sane before dropping to EL1.</span><br><span class="hljs-comment">*</span><br><span class="hljs-comment">* Returns either BOOT_CPU_MODE_EL1 or BOOT_CPU_MODE_EL2 in w0 if</span><br><span class="hljs-comment">* booted in EL1 or EL2 respectively.</span><br><span class="hljs-comment">*/</span><br>SYM_FUNC_START(el2_setup)<br>    msr	SPsel, #<span class="hljs-number">1</span>			<span class="hljs-comment">// We want to use SP_EL&#123;1,2&#125;</span><br>    mrs	x0, CurrentEL<br>    cmp	x0, #CurrentEL_EL2<br>    b.eq	<span class="hljs-number">1f</span><br>    mov_q	x0, (SCTLR_EL1_RES1 | ENDIAN_SET_EL1)<br>    msr	sctlr_el1, x0<br>    mov	w0, #BOOT_CPU_MODE_EL1		<span class="hljs-comment">// This cpu booted in EL1</span><br>    isb<br>    ret<br>    <br>    <span class="hljs-number">1</span>:	mov_q	x0, (SCTLR_EL2_RES1 | ENDIAN_SET_EL2)<br>	msr	sctlr_el2, x0<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-4-set-cpu-boot-mode-flag"><a href="#3-2-4-set-cpu-boot-mode-flag" class="headerlink" title="3.2.4 set_cpu_boot_mode_flag"></a>3.2.4 set_cpu_boot_mode_flag</h4><p>设置全局变量<code>__boot_cpu_mode</code>，前提是CPU退回EL1模式</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/*</span><br><span class="hljs-comment"> * Sets the __boot_cpu_mode flag depending on the CPU boot mode passed</span><br><span class="hljs-comment"> * in w0. See arch/arm64/include/asm/virt.h for more info.</span><br><span class="hljs-comment"> */</span><br>SYM_FUNC_START_LOCAL(set_cpu_boot_mode_flag)<br>	adr_l	x1, __boot_cpu_mode<br>	cmp	w0, #BOOT_CPU_MODE_EL2<br>	b.ne	<span class="hljs-number">1f</span><br>	add	x1, x1, #<span class="hljs-number">4</span><br><span class="hljs-number">1</span>:	str	w0, [x1]			<span class="hljs-comment">// This CPU has booted in EL1</span><br>	dmb	sy<br>	dc	ivac, x1			<span class="hljs-comment">// Invalidate potentially stale cache line</span><br>	ret<br><span class="hljs-title function_">SYM_FUNC_END</span><span class="hljs-params">(set_cpu_boot_mode_flag)</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/*</span><br><span class="hljs-comment"> * We need to find out the CPU boot mode long after boot, so we need to</span><br><span class="hljs-comment"> * store it in a writable variable.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * This is not in .bss, because we set it sufficiently early that the boot-time</span><br><span class="hljs-comment"> * zeroing of .bss would clobber it.</span><br><span class="hljs-comment"> */</span><br>SYM_DATA_START(__boot_cpu_mode)<br>	.<span class="hljs-type">long</span>	BOOT_CPU_MODE_EL2<br>	.<span class="hljs-type">long</span>	BOOT_CPU_MODE_EL1<br><span class="hljs-title function_">SYM_DATA_END</span><span class="hljs-params">(__boot_cpu_mode)</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-5-create-page-tables"><a href="#3-2-5-create-page-tables" class="headerlink" title="3.2.5 __create_page_tables"></a>3.2.5 <a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v5.10.90/C/ident/__create_page_tables">__create_page_tables</a></h4><p>页表初始化</p>
+<ul>
+<li>identity mapping<ul>
+<li>建立整个内核（从KERNEL_START到KERNEL_END）的一致性mapping，将物理地址所在的虚拟地址段mapping到物理地址</li>
+<li>一致性映射可以保证在在 <strong>打开MMU 那一点附近的程序代码</strong>可以平滑切换</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/16688540/page-table-in-linux-kernel-space-during-boot/27266309#27266309">https://stackoverflow.com/questions/16688540/page-table-in-linux-kernel-space-during-boot/27266309#27266309</a><br>1）在使能 mmu 之前，CPU 产生的地址都是物理地址，使能 mmu 之后，产生的都是虚拟地址。<br>2）CPU 是 pipeline 工作的，在执行当前指令时，CPU 很可能已经做了一个动作，就是产生了下一条指令的地址（也就是计算出来了下一条指令在那里）。如果是在 mmu 打开之前，那这个地址就是物理地址。<br>因此，假设当前指令就是在打开 mmu，那么，在执行打开 mmu 这条指令时，CPU 已经产生了一个地址（下一条指令的地址），如上 2) 所讲，此时这个地址是物理地址。那么 打开mmu这条指令执行完毕，mmu 生效后，CPU会把刚才产生的物理地址当成虚拟地址，去 mmu 表中查找对应的物理地址</p>
+</blockquote>
+<ul>
+<li>Map the kernel image<ul>
+<li>仅从系统内存起始物理地址开始的一小段内存mapping</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>虚拟地址总线宽度最大可设置52，（36 39 42 47 48 52）</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/*</span><br><span class="hljs-comment"> * Setup the initial page tables. We only setup the barest amount which is</span><br><span class="hljs-comment"> * required to get the kernel running. The following sections are required:</span><br><span class="hljs-comment"> *   - identity mapping to enable the MMU (low address, TTBR0)</span><br><span class="hljs-comment"> *   - first few MB of the kernel linear mapping to jump to once the MMU has</span><br><span class="hljs-comment"> *     been enabled</span><br><span class="hljs-comment"> */</span><br>SYM_FUNC_START_LOCAL(__create_page_tables)<br>	mov	x28, lr<br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Invalidate the init page tables to avoid potential dirty cache lines</span><br><span class="hljs-comment">	 * being evicted. Other page tables are allocated in rodata as part of</span><br><span class="hljs-comment">	 * the kernel image, and thus are clean to the PoC per the boot</span><br><span class="hljs-comment">	 * protocol.</span><br><span class="hljs-comment">	 */</span><br>	adrp	x0, init_pg_dir<br>	adrp	x1, init_pg_end<br>	sub	x1, x1, x0<br>	bl	__inval_dcache_area<br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Clear the init page tables.</span><br><span class="hljs-comment">	 */</span><br>	adrp	x0, init_pg_dir<br>	adrp	x1, init_pg_end<br>	sub	x1, x1, x0<br><span class="hljs-number">1</span>:	stp	xzr, xzr, [x0], #<span class="hljs-number">16</span><br>	stp	xzr, xzr, [x0], #<span class="hljs-number">16</span><br>	stp	xzr, xzr, [x0], #<span class="hljs-number">16</span><br>	stp	xzr, xzr, [x0], #<span class="hljs-number">16</span><br>	subs	x1, x1, #<span class="hljs-number">64</span><br>	b.ne	<span class="hljs-number">1b</span><br><br>	mov	x7, SWAPPER_MM_MMUFLAGS<br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Create the identity mapping.</span><br><span class="hljs-comment">	 */</span><br>	adrp	x0, idmap_pg_dir<br>	adrp	x3, __idmap_text_start		<span class="hljs-comment">// __pa(__idmap_text_start)</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_ARM64_VA_BITS_52</span><br>	mrs_s	x6, SYS_ID_AA64MMFR2_EL1<br>	and	x6, x6, #(<span class="hljs-number">0xf</span> &lt;&lt; ID_AA64MMFR2_LVA_SHIFT)<br>	mov	x5, #<span class="hljs-number">52</span><br>	cbnz	x6, <span class="hljs-number">1f</span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>	mov	x5, #VA_BITS_MIN<br><span class="hljs-number">1</span>:<br>	adr_l	x6, vabits_actual<br>	str	x5, [x6]<br>	dmb	sy<br>	dc	ivac, x6		<span class="hljs-comment">// Invalidate potentially stale cache line</span><br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * VA_BITS may be too small to allow for an ID mapping to be created</span><br><span class="hljs-comment">	 * that covers system RAM if that is located sufficiently high in the</span><br><span class="hljs-comment">	 * physical address space. So for the ID map, use an extended virtual</span><br><span class="hljs-comment">	 * range in that case, and configure an additional translation level</span><br><span class="hljs-comment">	 * if needed.</span><br><span class="hljs-comment">	 *</span><br><span class="hljs-comment">	 * Calculate the maximum allowed value for TCR_EL1.T0SZ so that the</span><br><span class="hljs-comment">	 * entire ID map region can be mapped. As T0SZ == (64 - #bits used),</span><br><span class="hljs-comment">	 * this number conveniently equals the number of leading zeroes in</span><br><span class="hljs-comment">	 * the physical address of __idmap_text_end.</span><br><span class="hljs-comment">	 */</span><br>	adrp	x5, __idmap_text_end<br>	clz	x5, x5<br>	cmp	x5, TCR_T0SZ(VA_BITS_MIN) <span class="hljs-comment">// default T0SZ small enough?</span><br>	b.ge	<span class="hljs-number">1f</span>			<span class="hljs-comment">// .. then skip VA range extension</span><br><br>	adr_l	x6, idmap_t0sz<br>	str	x5, [x6]<br>	dmb	sy<br>	dc	ivac, x6		<span class="hljs-comment">// Invalidate potentially stale cache line</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">if</span> (VA_BITS &lt; 48)</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> EXTRA_SHIFT	(PGDIR_SHIFT + PAGE_SHIFT - 3)</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> EXTRA_PTRS	(1 &lt;&lt; (PHYS_MASK_SHIFT - EXTRA_SHIFT))</span><br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * If VA_BITS &lt; 48, we have to configure an additional table level.</span><br><span class="hljs-comment">	 * First, we have to verify our assumption that the current value of</span><br><span class="hljs-comment">	 * VA_BITS was chosen such that all translation levels are fully</span><br><span class="hljs-comment">	 * utilised, and that lowering T0SZ will always result in an additional</span><br><span class="hljs-comment">	 * translation level to be configured.</span><br><span class="hljs-comment">	 */</span><br><span class="hljs-meta">#<span class="hljs-keyword">if</span> VA_BITS != EXTRA_SHIFT</span><br><span class="hljs-meta">#<span class="hljs-keyword">error</span> <span class="hljs-string">&quot;Mismatch between VA_BITS and page size/number of translation levels&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><br>	mov	x4, EXTRA_PTRS<br>	create_table_entry x0, x3, EXTRA_SHIFT, x4, x5, x6<br><span class="hljs-meta">#<span class="hljs-keyword">else</span></span><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * If VA_BITS == 48, we don&#x27;t have to configure an additional</span><br><span class="hljs-comment">	 * translation level, but the top-level table has more entries.</span><br><span class="hljs-comment">	 */</span><br>	mov	x4, #<span class="hljs-number">1</span> &lt;&lt; (PHYS_MASK_SHIFT - PGDIR_SHIFT)<br>	str_l	x4, idmap_ptrs_per_pgd, x5<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><span class="hljs-number">1</span>:<br>	ldr_l	x4, idmap_ptrs_per_pgd<br>	mov	x5, x3				<span class="hljs-comment">// __pa(__idmap_text_start)</span><br>	adr_l	x6, __idmap_text_end		<span class="hljs-comment">// __pa(__idmap_text_end)</span><br><br>	map_memory x0, x1, x3, x6, x7, x3, x4, x10, x11, x12, x13, x14<br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Map the kernel image (starting with PHYS_OFFSET).</span><br><span class="hljs-comment">	 */</span><br>	adrp	x0, init_pg_dir<br>	mov_q	x5, KIMAGE_VADDR		<span class="hljs-comment">// compile time __va(_text)</span><br>	add	x5, x5, x23			<span class="hljs-comment">// add KASLR displacement</span><br>	mov	x4, PTRS_PER_PGD<br>	adrp	x6, _end			<span class="hljs-comment">// runtime __pa(_end)</span><br>	adrp	x3, _text			<span class="hljs-comment">// runtime __pa(_text)</span><br>	sub	x6, x6, x3			<span class="hljs-comment">// _end - _text</span><br>	add	x6, x6, x5			<span class="hljs-comment">// runtime __va(_end)</span><br><br>	map_memory x0, x1, x5, x6, x7, x3, x4, x10, x11, x12, x13, x14<br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Since the page tables have been populated with non-cacheable</span><br><span class="hljs-comment">	 * accesses (MMU disabled), invalidate those tables again to</span><br><span class="hljs-comment">	 * remove any speculatively loaded cache lines.</span><br><span class="hljs-comment">	 */</span><br>	dmb	sy<br><br>	adrp	x0, idmap_pg_dir<br>	adrp	x1, idmap_pg_end<br>	sub	x1, x1, x0<br>	bl	__inval_dcache_area<br><br>	adrp	x0, init_pg_dir<br>	adrp	x1, init_pg_end<br>	sub	x1, x1, x0<br>	bl	__inval_dcache_area<br><br>	ret	x28<br><span class="hljs-title function_">SYM_FUNC_END</span><span class="hljs-params">(__create_page_tables)</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-6-cpu-setup"><a href="#3-2-6-cpu-setup" class="headerlink" title="3.2.6 __cpu_setup"></a>3.2.6 __cpu_setup</h4><p>CPU初始化设置</p>
+<ul>
+<li>cache和TLB的处理<ul>
+<li>清空</li>
+</ul>
+</li>
+<li>设置TCR_EL1、SCTLR_EL1<ul>
+<li>kernel space和user space使用不同的页表，因此有两个Translation Table Base Registers，形成两套地址翻译系统，TCR_EL1寄存器主要用来控制这两套地址翻译系统</li>
+<li>SCTLR_EL1是一个对整个系统（包括memory system）进行控制的寄存器</li>
+</ul>
+</li>
+<li>CPU做好MMU打开的准备</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/*</span><br><span class="hljs-comment"> *	__cpu_setup</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *	Initialise the processor for turning the MMU on.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * Output:</span><br><span class="hljs-comment"> *	Return in x0 the value of the SCTLR_EL1 register.</span><br><span class="hljs-comment"> */</span><br>	.pushsection <span class="hljs-string">&quot;.idmap.text&quot;</span>, <span class="hljs-string">&quot;awx&quot;</span><br>SYM_FUNC_START(__cpu_setup)<br>	tlbi	vmalle1				<span class="hljs-comment">// Invalidate local TLB</span><br>	dsb	nsh<br><br>	mov	x1, #<span class="hljs-number">3</span> &lt;&lt; <span class="hljs-number">20</span><br>	msr	cpacr_el1, x1			<span class="hljs-comment">// Enable FP/ASIMD</span><br>	mov	x1, #<span class="hljs-number">1</span> &lt;&lt; <span class="hljs-number">12</span>			<span class="hljs-comment">// Reset mdscr_el1 and disable</span><br>	msr	mdscr_el1, x1			<span class="hljs-comment">// access to the DCC from EL0</span><br>	isb					<span class="hljs-comment">// Unmask debug exceptions now,</span><br>	enable_dbg				<span class="hljs-comment">// since this is per-cpu</span><br>	reset_pmuserenr_el0 x1			<span class="hljs-comment">// Disable PMU access from EL0</span><br>	reset_amuserenr_el0 x1			<span class="hljs-comment">// Disable AMU access from EL0</span><br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Memory region attributes</span><br><span class="hljs-comment">	 */</span><br>	mov_q	x5, MAIR_EL1_SET<br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_ARM64_MTE</span><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Update MAIR_EL1, GCR_EL1 and TFSR*_EL1 if MTE is supported</span><br><span class="hljs-comment">	 * (ID_AA64PFR1_EL1[11:8] &gt; 1).</span><br><span class="hljs-comment">	 */</span><br>	mrs	x10, ID_AA64PFR1_EL1<br>	ubfx	x10, x10, #ID_AA64PFR1_MTE_SHIFT, #<span class="hljs-number">4</span><br>	cmp	x10, #ID_AA64PFR1_MTE<br>	b.lt	<span class="hljs-number">1f</span><br><br>	<span class="hljs-comment">/* Normal Tagged memory type at the corresponding MAIR index */</span><br>	mov	x10, #MAIR_ATTR_NORMAL_TAGGED<br>	bfi	x5, x10, #(<span class="hljs-number">8</span> *  MT_NORMAL_TAGGED), #<span class="hljs-number">8</span><br><br>	<span class="hljs-comment">/* initialize GCR_EL1: all non-zero tags excluded by default */</span><br>	mov	x10, #(SYS_GCR_EL1_RRND | SYS_GCR_EL1_EXCL_MASK)<br>	msr_s	SYS_GCR_EL1, x10<br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * If GCR_EL1.RRND=1 is implemented the same way as RRND=0, then</span><br><span class="hljs-comment">	 * RGSR_EL1.SEED must be non-zero for IRG to produce</span><br><span class="hljs-comment">	 * pseudorandom numbers. As RGSR_EL1 is UNKNOWN out of reset, we</span><br><span class="hljs-comment">	 * must initialize it.</span><br><span class="hljs-comment">	 */</span><br>	mrs	x10, CNTVCT_EL0<br>	ands	x10, x10, #SYS_RGSR_EL1_SEED_MASK<br>	csinc	x10, x10, xzr, ne<br>	lsl	x10, x10, #SYS_RGSR_EL1_SEED_SHIFT<br>	msr_s	SYS_RGSR_EL1, x10<br><br>	<span class="hljs-comment">/* clear any pending tag check faults in TFSR*_EL1 */</span><br>	msr_s	SYS_TFSR_EL1, xzr<br>	msr_s	SYS_TFSRE0_EL1, xzr<br><span class="hljs-number">1</span>:<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>	msr	mair_el1, x5<br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Set/prepare TCR and TTBR. We use 512GB (39-bit) address range for</span><br><span class="hljs-comment">	 * both user and kernel.</span><br><span class="hljs-comment">	 */</span><br>	mov_q	x10, TCR_TxSZ(VA_BITS) | TCR_CACHE_FLAGS | TCR_SMP_FLAGS | \<br>			TCR_TG_FLAGS | TCR_KASLR_FLAGS | TCR_ASID16 | \<br>			TCR_TBI0 | TCR_A1 | TCR_KASAN_FLAGS<br>	tcr_clear_errata_bits x10, x9, x5<br><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_ARM64_VA_BITS_52</span><br>	ldr_l		x9, vabits_actual<br>	sub		x9, xzr, x9<br>	add		x9, x9, #<span class="hljs-number">64</span><br>	tcr_set_t1sz	x10, x9<br><span class="hljs-meta">#<span class="hljs-keyword">else</span></span><br>	ldr_l		x9, idmap_t0sz<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>	tcr_set_t0sz	x10, x9<br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Set the IPS bits in TCR_EL1.</span><br><span class="hljs-comment">	 */</span><br>	tcr_compute_pa_size x10, #TCR_IPS_SHIFT, x5, x6<br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_ARM64_HW_AFDBM</span><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Enable hardware update of the Access Flags bit.</span><br><span class="hljs-comment">	 * Hardware dirty bit management is enabled later,</span><br><span class="hljs-comment">	 * via capabilities.</span><br><span class="hljs-comment">	 */</span><br>	mrs	x9, ID_AA64MMFR1_EL1<br>	and	x9, x9, #<span class="hljs-number">0xf</span><br>	cbz	x9, <span class="hljs-number">1f</span><br>	orr	x10, x10, #TCR_HA		<span class="hljs-comment">// hardware Access flag update</span><br><span class="hljs-number">1</span>:<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span>	<span class="hljs-comment">/* CONFIG_ARM64_HW_AFDBM */</span></span><br>	msr	tcr_el1, x10<br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Prepare SCTLR</span><br><span class="hljs-comment">	 */</span><br>	mov_q	x0, SCTLR_EL1_SET<br>	ret					<span class="hljs-comment">// return to head.S</span><br>SYM_FUNC_END(__cpu_setup)<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-7-primary-switch"><a href="#3-2-7-primary-switch" class="headerlink" title="3.2.7  __primary_switch"></a>3.2.7  <a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v5.10.90/C/ident/__primary_switch">__primary_switch</a></h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs c">SYM_FUNC_START_LOCAL(__primary_switch)<br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_RANDOMIZE_BASE</span><br>	mov	x19, x0				<span class="hljs-comment">// preserve new SCTLR_EL1 value</span><br>	mrs	x20, sctlr_el1			<span class="hljs-comment">// preserve old SCTLR_EL1 value</span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><br>	adrp	x1, init_pg_dir<br>	bl	__enable_mmu         <span class="hljs-comment">// 跳转，开启 MMU</span><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_RELOCATABLE</span><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_RELR</span><br>	mov	x24, #<span class="hljs-number">0</span>				<span class="hljs-comment">// no RELR displacement yet</span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>	bl	__relocate_kernel<br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_RANDOMIZE_BASE</span><br>	ldr	x8, =__primary_switched<br>	adrp	x0, __PHYS_OFFSET<br>	blr	x8<br><br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * If we return here, we have a KASLR displacement in x23 which we need</span><br><span class="hljs-comment">	 * to take into account by discarding the current kernel mapping and</span><br><span class="hljs-comment">	 * creating a new one.</span><br><span class="hljs-comment">	 */</span><br>	pre_disable_mmu_workaround<br>	msr	sctlr_el1, x20			<span class="hljs-comment">// disable the MMU</span><br>	isb<br>	bl	__create_page_tables		<span class="hljs-comment">// recreate kernel mapping</span><br><br>	tlbi	vmalle1				<span class="hljs-comment">// Remove any stale TLB entries</span><br>	dsb	nsh<br>	isb<br><br>	msr	sctlr_el1, x19			<span class="hljs-comment">// re-enable the MMU</span><br>	isb<br>	ic	iallu				<span class="hljs-comment">// flush instructions fetched</span><br>	dsb	nsh				<span class="hljs-comment">// via old mapping</span><br>	isb<br><br>	bl	__relocate_kernel<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>	ldr	x8, =__primary_switched<br>	adrp	x0, __PHYS_OFFSET<br>	br	x8<br>SYM_FUNC_END(__primary_switch)<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-8-enable-mmu"><a href="#3-2-8-enable-mmu" class="headerlink" title="3.2.8 __enable_mmu"></a>3.2.8 __enable_mmu</h4><p>开启MMU</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/*</span><br><span class="hljs-comment"> * Enable the MMU.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *  x0  = SCTLR_EL1 value for turning on the MMU.</span><br><span class="hljs-comment"> *  x1  = TTBR1_EL1 value</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * Returns to the caller via x30/lr. This requires the caller to be covered</span><br><span class="hljs-comment"> * by the .idmap.text section.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * Checks if the selected granule size is supported by the CPU.</span><br><span class="hljs-comment"> * If it isn&#x27;t, park the CPU</span><br><span class="hljs-comment"> */</span><br>SYM_FUNC_START(__enable_mmu)<br>	mrs	x2, ID_AA64MMFR0_EL1<br>	ubfx	x2, x2, #ID_AA64MMFR0_TGRAN_SHIFT, <span class="hljs-number">4</span><br>	cmp	x2, #ID_AA64MMFR0_TGRAN_SUPPORTED<br>	b.ne	__no_granule_support<br>	update_early_cpu_boot_status <span class="hljs-number">0</span>, x2, x3<br>	adrp	x2, idmap_pg_dir<br>	phys_to_ttbr x1, x1<br>	phys_to_ttbr x2, x2<br>	msr	ttbr0_el1, x2			<span class="hljs-comment">// load TTBR0</span><br>	offset_ttbr1 x1, x3<br>	msr	ttbr1_el1, x1			<span class="hljs-comment">// load TTBR1</span><br>	isb<br>	msr	sctlr_el1, x0<br>	isb<br>	<span class="hljs-comment">/*</span><br><span class="hljs-comment">	 * Invalidate the local I-cache so that any instructions fetched</span><br><span class="hljs-comment">	 * speculatively from the PoC are discarded, since they may have</span><br><span class="hljs-comment">	 * been dynamically patched at the PoU.</span><br><span class="hljs-comment">	 */</span><br>	ic	iallu<br>	dsb	nsh<br>	isb<br>	ret<br><span class="hljs-title function_">SYM_FUNC_END</span><span class="hljs-params">(__enable_mmu)</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-9-primary-switched"><a href="#3-2-9-primary-switched" class="headerlink" title="3.2.9 __primary_switched"></a>3.2.9 __primary_switched</h4><p>C环境准备</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/*</span><br><span class="hljs-comment"> * The following fragment of code is executed with the MMU enabled.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> *   x0 = __PHYS_OFFSET</span><br><span class="hljs-comment"> */</span><br>SYM_FUNC_START_LOCAL(__primary_switched)<br>	adrp	x4, init_thread_union<br>	add	sp, x4, #THREAD_SIZE<br>	adr_l	x5, init_task<br>	msr	sp_el0, x5			<span class="hljs-comment">// Save thread_info</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_ARM64_PTR_AUTH</span><br>	__ptrauth_keys_init_cpu	x5, x6, x7, x8<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><br>	adr_l	x8, vectors			<span class="hljs-comment">// load VBAR_EL1 with virtual</span><br>	msr	vbar_el1, x8			<span class="hljs-comment">// vector table address</span><br>	isb<br><br>	stp	xzr, x30, [sp, #<span class="hljs-number">-16</span>]!<br>	mov	x29, sp<br><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_SHADOW_CALL_STACK</span><br>	adr_l	scs_sp, init_shadow_call_stack	<span class="hljs-comment">// Set shadow call stack</span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><br>	str_l	x21, __fdt_pointer, x5		<span class="hljs-comment">// Save FDT pointer</span><br><br>	ldr_l	x4, kimage_vaddr		<span class="hljs-comment">// Save the offset between</span><br>	sub	x4, x4, x0			<span class="hljs-comment">// the kernel virtual and</span><br>	str_l	x4, kimage_voffset, x5		<span class="hljs-comment">// physical mappings</span><br><br>	<span class="hljs-comment">// Clear BSS</span><br>	adr_l	x0, __bss_start<br>	mov	x1, xzr<br>	adr_l	x2, __bss_stop<br>	sub	x2, x2, x0<br>	bl	__pi_memset<br>	dsb	ishst				<span class="hljs-comment">// Make zero page visible to PTW</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_KASAN</span><br>	bl	kasan_early_init<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> CONFIG_RANDOMIZE_BASE</span><br>	tst	x23, ~(MIN_KIMG_ALIGN - <span class="hljs-number">1</span>)	<span class="hljs-comment">// already running randomized?</span><br>	b.ne	<span class="hljs-number">0f</span><br>	mov	x0, x21				<span class="hljs-comment">// pass FDT address in x0</span><br>	bl	kaslr_early_init		<span class="hljs-comment">// parse FDT for KASLR options</span><br>	cbz	x0, <span class="hljs-number">0f</span>				<span class="hljs-comment">// KASLR disabled? just proceed</span><br>	orr	x23, x23, x0			<span class="hljs-comment">// record KASLR offset</span><br>	ldp	x29, x30, [sp], #<span class="hljs-number">16</span>		<span class="hljs-comment">// we must enable KASLR, return</span><br>	ret					<span class="hljs-comment">// to __primary_switch()</span><br><span class="hljs-number">0</span>:<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>	add	sp, sp, #<span class="hljs-number">16</span><br>	mov	x29, #<span class="hljs-number">0</span><br>	mov	x30, #<span class="hljs-number">0</span><br>	b	start_kernel<br><span class="hljs-title function_">SYM_FUNC_END</span><span class="hljs-params">(__primary_switched)</span><br><br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-10-start-kernel"><a href="#3-2-10-start-kernel" class="headerlink" title="3.2.10 start_kernel"></a>3.2.10 <a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v5.10.90/C/ident/start_kernel">start_kernel</a></h4><p>汇编阶段结束，第二阶段开始，第二阶段开发语言为C语言。</p>
+<h3 id="3-3-第一阶段总结"><a href="#3-3-第一阶段总结" class="headerlink" title="3.3 第一阶段总结"></a>3.3 第一阶段总结</h3><p><code>TODO</code></p>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/lcw/p/3337937.html">Linux内核启动流程-博客园</a></li>
+<li><a target="_blank" rel="noopener" href="https://mshrimp.github.io/2020/04/19/Linux%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B-%E5%9F%BA%E4%BA%8EARM64/">Linux内核启动流程-基于ARM64</a> （推荐阅读）</li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/yangguoyu8023/article/details/121246788">Linux内核4.14版本：ARM64的内核启动过程（一）——start_kernel之前</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/yangguoyu8023/article/details/121452085">Linux内核4.14版本：ARM64的内核启动过程（二）——start_kernel</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/lemaden/p/10438499.html">Linux内核镜像文件格式与生成过程</a></li>
+<li><a target="_blank" rel="noopener" href="http://wiki.csie.ncku.edu.tw/embedded/ARMv8">ARMv8，某台湾高校教师做的wiki</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/armv8a_arch/armv8-a_overview.html">ARMv8-a架构简介</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/armv8a_arch/arm64_initialize_1.html">ARM64的启动过程之（一）：内核第一个脚印</a> （系列文章，推荐阅读）</li>
+<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/armv8a_arch/create_page_tables.html">ARM64的启动过程之（二）：创建启动阶段的页表</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/armv8a_arch/__cpu_setup.html">ARM64的启动过程之（三）：为打开MMU而进行的CPU初始化</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/armv8a_arch/turn-on-mmu.html">ARM64的启动过程之（四）：打开MMU</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/armv8a_arch/UEFI.html">ARM64的启动过程之（五）：UEFI</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/armv8a_arch/238.html">ARM64的启动过程之（六）：异常向量表的设定</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/147481736">ARM-汇编指令集（总结）</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/84951062">ARM汇编语言 - 简介 [三]</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.shenyuanluo.com/Arm64PushAndPopStack.html">arm64 架构之入栈&#x2F;出栈操作</a> （汇编指令集，推荐阅读）</li>
+<li><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1856474">MMU是如何完成地址翻译的？</a></li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
+      
+        <a href="/tags/Linux%E5%86%85%E6%A0%B8/">#Linux内核</a>
+      
+        <a href="/tags/ARM64/">#ARM64</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>ARM64架构Linux内核启动过程分析_上</div>
+      <div>http://ziyangfu.github.io/2023/04/14/ARM64架构Linux内核启动过程分析_上/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>FZY</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年4月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/04/14/vsomeip%E4%B8%8EcommonAPI%E7%9A%84%E7%A7%BB%E6%A4%8D%E4%B8%8E%E5%BA%94%E7%94%A8/" title="vsomeip与commonAPI的移植与应用">
+                        <span class="hidden-mobile">vsomeip与commonAPI的移植与应用</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","appKey":"PXw2Tf5wmgP8pwaWaayNPuiU","path":"window.location.pathname","placeholder":"说点什么吧","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
