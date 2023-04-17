@@ -35,8 +35,9 @@
 <meta property="og:image" content="https://raw.githubusercontent.com/ziyangfu/my-image-hosting/master/DeepinScreenshot_select-area_20220127115435.6iumlrca0000.webp">
 <meta property="og:image" content="https://raw.githubusercontent.com/ziyangfu/my-image-hosting/master/DeepinScreenshot_select-area_20220127120603.6at1mnuy39s0.webp">
 <meta property="og:image" content="https://raw.githubusercontent.com/ziyangfu/my-image-hosting/master/DeepinScreenshot_select-area_20220127121252.3rgcie36s2w0.webp">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/17/SOMEIP%E5%8D%8F%E8%AE%AE%E7%90%86%E8%A7%A3/image-20230417151307817.png">
 <meta property="article:published_time" content="2023-04-17T06:46:41.000Z">
-<meta property="article:modified_time" content="2023-04-17T06:58:54.458Z">
+<meta property="article:modified_time" content="2023-04-17T07:14:40.407Z">
 <meta property="article:author" content="FZY">
 <meta property="article:tag" content="网络">
 <meta property="article:tag" content="原创">
@@ -252,7 +253,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.3k 字
+          3.6k 字
         
       </span>
     
@@ -263,7 +264,7 @@
         
         
         
-          28 分钟
+          31 分钟
         
       </span>
     
@@ -583,6 +584,20 @@
 
 
 <img src="https://raw.githubusercontent.com/ziyangfu/my-image-hosting/master/DeepinScreenshot_select-area_20220127121252.3rgcie36s2w0.webp" srcset="/img/loading.gif" lazyload alt="DeepinScreenshot_select-area_20220127121252" style="zoom:67%;">
+
+<h3 id="6-通过wireshark识别与解析SOME-x2F-IP协议"><a href="#6-通过wireshark识别与解析SOME-x2F-IP协议" class="headerlink" title="6. 通过wireshark识别与解析SOME&#x2F;IP协议"></a>6. 通过wireshark识别与解析SOME&#x2F;IP协议</h3><p>wireshark识别应用层协议采用 端口号-应用层协议绑定（例如：port 80 &#x3D; HTTP）及自启发识别机制，而SOMEIP协议 wireshark无法通过端口号识别，自启发识别算法失效，因此为了解析SOMEIP协议分组，需手动设置。</p>
+<ol>
+<li>选择数据包，右键选择 <code>Decode As</code></li>
+<li>协议选择SOME&#x2F;IP协议</li>
+<li>过滤器键入<code>someip</code>或<code>someipsd</code>可以过滤协议</li>
+</ol>
+<blockquote>
+<p>保持永久设置，实质是绑定端口与协议</p>
+<p>点击菜单栏-&gt;edit-&gt;preference-&gt;protocol,选择SOMEIP协议</p>
+<p>SOMEIP 及SOMEIP-SD 解析</p>
+</blockquote>
+<img src="/2023/04/17/SOMEIP%E5%8D%8F%E8%AE%AE%E7%90%86%E8%A7%A3/image-20230417151307817.png" srcset="/img/loading.gif" lazyload alt="image-20230417151307817" style="zoom: 50%;">
+
 
                 
               </div>
