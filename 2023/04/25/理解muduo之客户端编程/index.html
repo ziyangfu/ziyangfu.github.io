@@ -1,0 +1,791 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="FZY">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="理解muduo之客户端编程0.前言本文通过跟踪asio_chat_client程序与muduo网络库，试图回答以下两个问题：  如何建立TCP连接 如何发送数据  以例程为抓手，理解muduo网络库的工作机制与源码。 请时刻记住以下几张图，它有助于理解muduo工作机制以及一次循环中各种回调发生的顺序。   muduo网络编程模型之一（默认）：多Reactor，即 one loop per thr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="理解muduo之客户端编程">
+<meta property="og:url" content="http://ziyangfu.github.io/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/index.html">
+<meta property="og:site_name" content="聚焦Linux内核与C++中间件">
+<meta property="og:description" content="理解muduo之客户端编程0.前言本文通过跟踪asio_chat_client程序与muduo网络库，试图回答以下两个问题：  如何建立TCP连接 如何发送数据  以例程为抓手，理解muduo网络库的工作机制与源码。 请时刻记住以下几张图，它有助于理解muduo工作机制以及一次循环中各种回调发生的顺序。   muduo网络编程模型之一（默认）：多Reactor，即 one loop per thr">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425141742220.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425141433082.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425140356426.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425142334050.png">
+<meta property="article:published_time" content="2023-04-25T05:45:24.000Z">
+<meta property="article:modified_time" content="2023-04-25T09:22:41.049Z">
+<meta property="article:author" content="FZY">
+<meta property="article:tag" content="网络">
+<meta property="article:tag" content="原创">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://ziyangfu.github.io/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425141742220.png">
+  
+  
+  
+  <title>理解muduo之客户端编程 - 聚焦Linux内核与C++中间件</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ziyangfu.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","app_key":"PXw2Tf5wmgP8pwaWaayNPuiU","server_url":"https://wzw3bc90.lc-cn-e1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>好好学习， 天天向上</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="理解muduo之客户端编程"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-04-25 13:45" pubdate>
+          2023年4月25日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          9.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          76 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">理解muduo之客户端编程</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="理解muduo之客户端编程"><a href="#理解muduo之客户端编程" class="headerlink" title="理解muduo之客户端编程"></a>理解muduo之客户端编程</h1><h3 id="0-前言"><a href="#0-前言" class="headerlink" title="0.前言"></a>0.前言</h3><p>本文通过跟踪asio_chat_client程序与muduo网络库，试图回答以下两个问题：</p>
+<ul>
+<li>如何建立TCP连接</li>
+<li>如何发送数据</li>
+</ul>
+<p>以例程为抓手，理解muduo网络库的工作机制与源码。</p>
+<p>请时刻记住以下几张图，它有助于理解muduo工作机制以及一次循环中各种回调发生的顺序。</p>
+<img src="/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425141742220.png" srcset="/img/loading.gif" lazyload alt="image-20230425141742220" style="zoom: 67%;">
+
+<p><em>muduo网络编程模型之一（默认）：多Reactor，即 one loop per thread</em></p>
+<img src="/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425141433082.png" srcset="/img/loading.gif" lazyload alt="image-20230425141433082" style="zoom:67%;">
+
+<p><em>muduo网络编程模型之二：多Reactor + 线程池模型（计算线程）</em></p>
+<blockquote>
+<p>另外2种为：单Reactor与单Reactor+线程池</p>
+</blockquote>
+<img src="/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425140356426.png" srcset="/img/loading.gif" lazyload alt="image-20230425140356426" style="zoom:50%;">
+
+<p><em>三者关系</em></p>
+<img src="/2023/04/25/%E7%90%86%E8%A7%A3muduo%E4%B9%8B%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%96%E7%A8%8B/image-20230425142334050.png" srcset="/img/loading.gif" lazyload class title="image-20230425142334050">
+
+<p><em>网络编程之Reactor模型</em></p>
+<h3 id="1-asio-chat-client客户端程序"><a href="#1-asio-chat-client客户端程序" class="headerlink" title="1. asio_chat_client客户端程序"></a>1. asio_chat_client客户端程序</h3><p>功能：回显，即建立TCP连接后，客户端发送消息，服务端将数据原封发送回来，并显示。</p>
+<p>源码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;examples/asio/chat/codec.h&quot;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;muduo/base/Logging.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;muduo/base/Mutex.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;muduo/net/EventLoopThread.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;muduo/net/TcpClient.h&quot;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;muduo/base/Logging.h&quot;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-keyword">using</span> <span class="hljs-keyword">namespace</span> muduo;<br><span class="hljs-keyword">using</span> <span class="hljs-keyword">namespace</span> muduo::net;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">ChatClient</span> : noncopyable<br>&#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-built_in">ChatClient</span>(EventLoop* loop, <span class="hljs-type">const</span> InetAddress&amp; serverAddr)<br>    : <span class="hljs-built_in">client_</span>(loop, serverAddr, <span class="hljs-string">&quot;ChatClient&quot;</span>),<br>      <span class="hljs-built_in">codec_</span>(std::<span class="hljs-built_in">bind</span>(&amp;ChatClient::onStringMessage, <span class="hljs-keyword">this</span>, _1, _2, _3))<br>  &#123;<br>    client_.<span class="hljs-built_in">setConnectionCallback</span>(<br>        std::<span class="hljs-built_in">bind</span>(&amp;ChatClient::onConnection, <span class="hljs-keyword">this</span>, _1));<br>    client_.<span class="hljs-built_in">setMessageCallback</span>(<br>        std::<span class="hljs-built_in">bind</span>(&amp;LengthHeaderCodec::onMessage, &amp;codec_, _1, _2, _3));<br>    client_.<span class="hljs-built_in">enableRetry</span>();<br>  &#125;<br><br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">connect</span><span class="hljs-params">()</span></span><br><span class="hljs-function">  </span>&#123;<br>    client_.<span class="hljs-built_in">connect</span>();<br>  &#125;<br><br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">disconnect</span><span class="hljs-params">()</span></span><br><span class="hljs-function">  </span>&#123;<br>    client_.<span class="hljs-built_in">disconnect</span>();<br>  &#125;<br><br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">write</span><span class="hljs-params">(<span class="hljs-type">const</span> StringPiece&amp; message)</span></span><br><span class="hljs-function">  </span>&#123;<br>    <span class="hljs-function">MutexLockGuard <span class="hljs-title">lock</span><span class="hljs-params">(mutex_)</span></span>;<br>    <span class="hljs-keyword">if</span> (connection_)<br>    &#123;<br>      codec_.<span class="hljs-built_in">send</span>(<span class="hljs-built_in">get_pointer</span>(connection_), message);<br>    &#125;<br>  &#125;<br><br> <span class="hljs-keyword">private</span>:<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">onConnection</span><span class="hljs-params">(<span class="hljs-type">const</span> TcpConnectionPtr&amp; conn)</span></span><br><span class="hljs-function">  </span>&#123;<br>    LOG_INFO &lt;&lt; conn-&gt;<span class="hljs-built_in">localAddress</span>().<span class="hljs-built_in">toIpPort</span>() &lt;&lt; <span class="hljs-string">&quot; -&gt; &quot;</span><br>             &lt;&lt; conn-&gt;<span class="hljs-built_in">peerAddress</span>().<span class="hljs-built_in">toIpPort</span>() &lt;&lt; <span class="hljs-string">&quot; is &quot;</span><br>             &lt;&lt; (conn-&gt;<span class="hljs-built_in">connected</span>() ? <span class="hljs-string">&quot;UP&quot;</span> : <span class="hljs-string">&quot;DOWN&quot;</span>);<br><br>    <span class="hljs-function">MutexLockGuard <span class="hljs-title">lock</span><span class="hljs-params">(mutex_)</span></span>;<br>    <span class="hljs-keyword">if</span> (conn-&gt;<span class="hljs-built_in">connected</span>())<br>    &#123;<br>      connection_ = conn;<br>    &#125;<br>    <span class="hljs-keyword">else</span><br>    &#123;<br>      connection_.<span class="hljs-built_in">reset</span>();<br>    &#125;<br>  &#125;<br><br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">onStringMessage</span><span class="hljs-params">(<span class="hljs-type">const</span> TcpConnectionPtr&amp;,</span></span><br><span class="hljs-params"><span class="hljs-function">                       <span class="hljs-type">const</span> string&amp; message,</span></span><br><span class="hljs-params"><span class="hljs-function">                       Timestamp)</span></span><br><span class="hljs-function">  </span>&#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;&lt;&lt;&lt; %s\n&quot;</span>, message.<span class="hljs-built_in">c_str</span>());<br>  &#125;<br><br>  TcpClient client_;<br>  LengthHeaderCodec codec_;<br>  MutexLock mutex_;<br>  <span class="hljs-function">TcpConnectionPtr connection_ <span class="hljs-title">GUARDED_BY</span><span class="hljs-params">(mutex_)</span></span>;<br>&#125;;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span>* argv[])</span></span><br><span class="hljs-function"></span>&#123;<br>  Logger::<span class="hljs-built_in">setLogLevel</span>(Logger::TRACE);<br>  LOG_INFO &lt;&lt; <span class="hljs-string">&quot;pid = &quot;</span> &lt;&lt; <span class="hljs-built_in">getpid</span>();<br>  <span class="hljs-keyword">if</span> (argc &gt; <span class="hljs-number">2</span>)<br>  &#123;<br>    EventLoopThread loopThread;<br>    <span class="hljs-type">uint16_t</span> port = <span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">uint16_t</span>&gt;(<span class="hljs-built_in">atoi</span>(argv[<span class="hljs-number">2</span>]));<br>    <span class="hljs-function">InetAddress <span class="hljs-title">serverAddr</span><span class="hljs-params">(argv[<span class="hljs-number">1</span>], port)</span></span>; <span class="hljs-comment">// 设置协议族、IP地址与端口， 默认采用AF_INET</span><br><br>    <span class="hljs-function">ChatClient <span class="hljs-title">client</span><span class="hljs-params">(loopThread.startLoop(), serverAddr)</span></span>;<br>    client.<span class="hljs-built_in">connect</span>();<br>    std::string line;<br>    <span class="hljs-keyword">while</span> (std::<span class="hljs-built_in">getline</span>(std::cin, line))<br>    &#123;<br>      client.<span class="hljs-built_in">write</span>(line);<br>    &#125;<br>    client.<span class="hljs-built_in">disconnect</span>();<br>    CurrentThread::<span class="hljs-built_in">sleepUsec</span>(<span class="hljs-number">1000</span>*<span class="hljs-number">1000</span>);  <span class="hljs-comment">// wait for disconnect, see ace/logging/client.cc</span><br>  &#125;<br>  <span class="hljs-keyword">else</span><br>  &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Usage: %s host_ip port\n&quot;</span>, argv[<span class="hljs-number">0</span>]);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-loop循环的建立"><a href="#2-loop循环的建立" class="headerlink" title="2. loop循环的建立"></a>2. loop循环的建立</h3><blockquote>
+<p>主线程：用来读取输入，下述log中的线程ID：17696</p>
+<p>IO线程：处理IO事件，下述log中的线程ID：17697</p>
+</blockquote>
+<p>首先创建loopThread对象， <code>EventLoopThread loopThread</code>，该部分完成的工作是初始化以及绑定线程运行函数threadFunc。</p>
+<p>在设置协议族、IP地址与端口后，开始实例化一个对象<code>client</code>。在获得loop后，在构造函数中，设置了连接回调函数、消息回调函数与解编码回调，解编码本文不做描述，读者感兴趣可看源码。</p>
+<p>这部分传递2个参数，第一个是loop，即<code>loopThread.startLoop()</code>返回的loop， 第二个是服务端地址。</p>
+<p><code>loopThread.startLoop()</code>这个函数做的工作比较多。</p>
+<ul>
+<li><p>首先是创建一个IO线程，然后在IO线程中实例化一个EventLoop，即实现one loop per thread。</p>
+<ul>
+<li>在EventLoop构造函数中，会实例化<code>timerQueue_</code>与<code>wakeupChannel_</code>。</li>
+<li>设置<code>timerQueue_</code>的读事件回调处理函数。</li>
+<li>将<code>timerQueue_</code>设置读事件感兴趣，并将channel注册进epoll。</li>
+<li><code>wakeupChannel_</code>执行同样操作。</li>
+</ul>
+</li>
+<li><p>创建完成后，将IO线程中loop对象的地址传递给主线程。在主线程与IO线程中使用了条件变量作为同步原语。</p>
+</li>
+<li><p>运行<code>loop.loop</code>。</p>
+</li>
+</ul>
+<p>该阶段的运行日志如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs bash">fzy@fzy-Lenovo:~/Downloads/03_net_lib/build/release-cpp11/bin$ ./asio_chat_client localhost 18799<br>20230424 05:52:28.261481Z 17696 INFO  pid = 17696 - client.cc:84<br>20230424 05:52:28.261568Z 17696 ERROR sockets::fromIpPort - SocketsOps.cc:241<br><span class="hljs-comment"># Eventloop构造函数初始化时，：timerQueue_(new TimerQueue(this))，在timerQueue中设置enableRead</span><br><span class="hljs-comment"># timerfdChannel_.enableReading();</span><br>20230424 05:52:28.261943Z 17697 TRACE updateChannel fd = 4 events = 3 index = -1 - EPollPoller.cc:111<br>20230424 05:52:28.261973Z 17697 TRACE update epoll_ctl op = ADD fd = 4 event = &#123; 4: IN PRI  &#125; - EPollPoller.cc:179<br><span class="hljs-comment"># Eventloop构造函数，wakeupChannel_-&gt;enableReading();</span><br>20230424 05:52:28.262045Z 17697 DEBUG EventLoop EventLoop created 0x7FADC3B27B30 <span class="hljs-keyword">in</span> thread 17697 - EventLoop.cc:79<br>20230424 05:52:28.262055Z 17697 TRACE updateChannel fd = 5 events = 3 index = -1 - EPollPoller.cc:111<br>20230424 05:52:28.262062Z 17697 TRACE update epoll_ctl op = ADD fd = 5 event = &#123; 5: IN PRI  &#125; - EPollPoller.cc:179<br><span class="hljs-comment"># loop.loop()</span><br>20230424 05:52:28.262083Z 17697 TRACE loop EventLoop 0x7FADC3B27B30 start looping - EventLoop.cc:111<br>20230424 05:52:28.262097Z 17697 TRACE poll fd total count 2 - EPollPoller.cc:57<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-如何建立TCP连接"><a href="#3-如何建立TCP连接" class="headerlink" title="3. 如何建立TCP连接"></a>3. 如何建立TCP连接</h3><p>一句话描述：</p>
+<p>main函数中的<code>client.connect()</code>，怎么执行到ChatClient中的<code>void onConnection(const TcpConnectionPtr&amp; conn)</code>。以下是具体的过程：</p>
+<ul>
+<li><code>client.connect()</code>将经过到<code>ChatClient</code>， 调用<code>TcpCient</code>中的<code>connect</code>函数，进而调用<code>start</code>函数。</li>
+</ul>
+<p>此时调用<code>runInLoop</code>的线程不是loop线程，因此需要进行唤醒， <code>startInLoop</code>实际在<code>doPendingFunctors</code>中执行</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// muduo/net/Connector.cc</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Connector::start</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>  connect_ = <span class="hljs-literal">true</span>; <br>  <span class="hljs-comment">// 此时调用runInLoop的线程不是loop线程，因此需要进行唤醒， startInLoop实际在doPendingFunctors中执行</span><br>  loop_-&gt;<span class="hljs-built_in">runInLoop</span>(std::<span class="hljs-built_in">bind</span>(&amp;Connector::startInLoop, <span class="hljs-keyword">this</span>)); <span class="hljs-comment">// <span class="hljs-doctag">FIXME:</span> unsafe</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Connector::startInLoop</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>  loop_-&gt;<span class="hljs-built_in">assertInLoopThread</span>();<br>  <span class="hljs-built_in">assert</span>(state_ == kDisconnected);<br>  <span class="hljs-keyword">if</span> (connect_)<br>  &#123;<br>    <span class="hljs-built_in">connect</span>(); <span class="hljs-comment">// 开始准备建立连接</span><br>  &#125;<br>  <span class="hljs-keyword">else</span><br>  &#123;<br>    LOG_DEBUG &lt;&lt; <span class="hljs-string">&quot;do not connect&quot;</span>;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>在<code>connect</code>中，将创建非阻塞socket以及调用socket connect，连接建立成功后，调用<code>connecting</code>函数，并将<code>sockfd</code>传递给<code>connecting</code>函数。</li>
+<li>在<code>connecting</code>中，将建立TCP连接阶段时的写回调，注意，当建立连接后，Channel的回调将转到TCP Connection中。</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// muduo/net/Connector.cc</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Connector::connecting</span><span class="hljs-params">(<span class="hljs-type">int</span> sockfd)</span>   <span class="hljs-comment">// socket连接建立后，处理上层</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-built_in">setState</span>(kConnecting);<br>  <span class="hljs-built_in">assert</span>(!channel_);<br>  channel_.<span class="hljs-built_in">reset</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Channel</span>(loop_, sockfd));<br>  channel_-&gt;<span class="hljs-built_in">setWriteCallback</span>(  <span class="hljs-comment">// 建立TCP连接阶段时的写回调</span><br>      std::<span class="hljs-built_in">bind</span>(&amp;Connector::handleWrite, <span class="hljs-keyword">this</span>)); <span class="hljs-comment">// <span class="hljs-doctag">FIXME:</span> unsafe</span><br>  channel_-&gt;<span class="hljs-built_in">setErrorCallback</span>(<br>      std::<span class="hljs-built_in">bind</span>(&amp;Connector::handleError, <span class="hljs-keyword">this</span>)); <span class="hljs-comment">// <span class="hljs-doctag">FIXME:</span> unsafe</span><br><br>  <span class="hljs-comment">// channel_-&gt;tie(shared_from_this()); is not working,</span><br>  <span class="hljs-comment">// as channel_ is not managed by shared_ptr</span><br>  channel_-&gt;<span class="hljs-built_in">enableWriting</span>();   <span class="hljs-comment">// 最终会把channel添加到epoll中</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>写事件的发生</li>
+</ul>
+<p>&#x3D;&#x3D;TODO：写事件何时发生&#x3D;&#x3D;</p>
+<p>该阶段日志如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># Connector构造</span><br>20230424 05:52:28.262139Z 17696 DEBUG Connector ctor[0x5603D49F74A0] - Connector.cc:31<br><span class="hljs-comment"># TcpClient构造</span><br>20230424 05:52:28.262175Z 17696 INFO  TcpClient::TcpClient[ChatClient] - connector 0x5603D49F74A0 - TcpClient.cc:69<br><span class="hljs-comment"># client.connect();</span><br>20230424 05:52:28.262187Z 17696 INFO  TcpClient::connect[ChatClient] - connecting to 0.0.0.0:18799 - TcpClient.cc:107<br><span class="hljs-comment"># 有上层事件发生，唤醒loop线程</span><br>20230424 05:52:28.262227Z 17697 TRACE poll 1 events happened - EPollPoller.cc:66<br>20230424 05:52:28.262241Z 17697 TRACE printActiveChannels &#123;5: IN &#125;  - EventLoop.cc:277<br>20230424 05:52:28.262262Z 17697 TRACE handleEventWithGuard 5: IN  - Channel.cc:86<br><span class="hljs-comment"># 将建立的channel（socket）更新到epoll中</span><br>20230424 05:52:28.262454Z 17697 TRACE updateChannel fd = 6 events = 4 index = -1 - EPollPoller.cc:111<br>20230424 05:52:28.262470Z 17697 TRACE update epoll_ctl op = ADD fd = 6 event = &#123; 6: OUT  &#125; - EPollPoller.cc:179<br><span class="hljs-comment"># 继续阻塞在epoll_wait</span><br>20230424 05:52:28.262492Z 17697 TRACE poll fd total count 3 - EPollPoller.cc:57<br><span class="hljs-comment"># 什么事件发生？？</span><br>20230424 05:52:28.262503Z 17697 TRACE poll 1 events happened - EPollPoller.cc:66<br>20230424 05:52:28.262508Z 17697 TRACE printActiveChannels &#123;6: OUT &#125;  - EventLoop.cc:277<br>20230424 05:52:28.262516Z 17697 TRACE handleEventWithGuard 6: OUT  - Channel.cc:86<br><span class="hljs-comment"># void Connector::handleWrite()</span><br>20230424 05:52:28.262541Z 17697 TRACE handleWrite Connector::handleWrite 1 - Connector.cc:160<br>20230424 05:52:28.262546Z 17697 TRACE updateChannel fd = 6 events = 0 index = 1 - EPollPoller.cc:111<br>20230424 05:52:28.262559Z 17697 TRACE update epoll_ctl op = DEL fd = 6 event = &#123; 6:  &#125; - EPollPoller.cc:179<br>20230424 05:52:28.262572Z 17697 TRACE removeChannel fd = 6 - EPollPoller.cc:155<br><span class="hljs-comment"># TcpConnection构造函数</span><br>20230424 05:52:28.262610Z 17697 DEBUG TcpConnection TcpConnection::ctor[ChatClient:127.0.0.1:18799<span class="hljs-comment">#1] at 0x7FADBC001120 fd=6 - TcpConnection.cc:61</span><br><span class="hljs-comment"># void TcpConnection::connectEstablished()   enableReading()</span><br>20230424 05:52:28.262626Z 17697 TRACE updateChannel fd = 6 events = 3 index = -1 - EPollPoller.cc:111<br>20230424 05:52:28.262635Z 17697 TRACE update epoll_ctl op = ADD fd = 6 event = &#123; 6: IN PRI  &#125; - EPollPoller.cc:179<br><span class="hljs-comment"># client.cc中的onConnect()</span><br>20230424 05:52:28.262655Z 17697 INFO  127.0.0.1:33996 -&gt; 127.0.0.1:18799 is UP - client.cc:53<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-如何发送与接收数据"><a href="#4-如何发送与接收数据" class="headerlink" title="4. 如何发送与接收数据"></a>4. 如何发送与接收数据</h3><p>一句话描述：</p>
+<p>main函数中的<code>client.write(line)</code>，怎么执行到ChatClient中的<code>void onStringMessage</code>。 </p>
+<p>该阶段日志如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs bash">20230424 05:52:28.262667Z 17697 TRACE poll fd total count 3 - EPollPoller.cc:57<br>20230424 05:52:38.272933Z 17697 TRACE poll nothing happened - EPollPoller.cc:75<br>20230424 05:52:38.272972Z 17697 TRACE poll fd total count 3 - EPollPoller.cc:57<br><span class="hljs-comment"># 写入数据</span><br>helloworld<br><span class="hljs-comment"># 写事件发生，唤醒</span><br>20230424 05:52:47.287685Z 17697 TRACE poll 1 events happened - EPollPoller.cc:66<br>20230424 05:52:47.287713Z 17697 TRACE printActiveChannels &#123;5: IN &#125;  - EventLoop.cc:277<br>20230424 05:52:47.287737Z 17697 TRACE handleEventWithGuard 5: IN  - Channel.cc:86<br><span class="hljs-comment"># 读事件发生</span><br>20230424 05:52:47.287839Z 17697 TRACE poll fd total count 3 - EPollPoller.cc:57<br>20230424 05:52:47.288177Z 17697 TRACE poll 1 events happened - EPollPoller.cc:66<br>20230424 05:52:47.288197Z 17697 TRACE printActiveChannels &#123;6: IN &#125;  - EventLoop.cc:277<br>20230424 05:52:47.288213Z 17697 TRACE handleEventWithGuard 6: IN  - Channel.cc:86<br>&lt;&lt;&lt; <span class="hljs-string">helloworld</span><br><span class="hljs-string"># 继续阻塞在epoll_wait</span><br><span class="hljs-string">20230424 05:52:47.288315Z 17697 TRACE poll fd total count 3 - EPollPoller.cc:57</span><br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h3><p>本文的主要内容，在陈硕的《Linux多线程服务端编程》一书中均有体现。陈书全面之余，有些许零散，初次阅读可能会很难从整体把握muduo工作流。因此尝试以应用开发者的角度，跟踪源码，将整个过程串起来。</p>
+<p>本文可能有错误之处，敬请批评指正。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E7%BD%91%E7%BB%9C/">#网络</a>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>理解muduo之客户端编程</div>
+      <div>http://ziyangfu.github.io/2023/04/25/理解muduo之客户端编程/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>FZY</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年4月25日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/04/19/%E4%BB%8Ewireshark%E4%B8%AD%E7%9C%8BTCP%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B/" title="Linux内核TCP三次握手过程及在wireshark中的观测">
+                        <span class="hidden-mobile">Linux内核TCP三次握手过程及在wireshark中的观测</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","appKey":"PXw2Tf5wmgP8pwaWaayNPuiU","path":"window.location.pathname","placeholder":"说点什么吧","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
