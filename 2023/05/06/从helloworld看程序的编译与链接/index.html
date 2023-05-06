@@ -1,0 +1,767 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="FZY">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="从hello world看程序的编译与链接众所周知，程序的编译分为四个阶段，分别为预处理、编译、汇编与链接。以下从一个简单的hello world剖析程序的编译过程。 1. 程序的编译与链接源代码： 123456&#x2F;&#x2F; @file: test.c#include&lt;stdio.h&gt;int main() &amp;#123;	printf(&quot;hello world\n&quot;);	re">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从helloworld看程序的编译与链接">
+<meta property="og:url" content="http://ziyangfu.github.io/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/index.html">
+<meta property="og:site_name" content="聚焦Linux内核与C++中间件">
+<meta property="og:description" content="从hello world看程序的编译与链接众所周知，程序的编译分为四个阶段，分别为预处理、编译、汇编与链接。以下从一个简单的hello world剖析程序的编译过程。 1. 程序的编译与链接源代码： 123456&#x2F;&#x2F; @file: test.c#include&lt;stdio.h&gt;int main() &amp;#123;	printf(&quot;hello world\n&quot;);	re">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/image-20230506134756517.png">
+<meta property="article:published_time" content="2023-05-06T02:58:39.000Z">
+<meta property="article:modified_time" content="2023-05-06T06:03:53.980Z">
+<meta property="article:author" content="FZY">
+<meta property="article:tag" content="原创">
+<meta property="article:tag" content="计算机科学">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://ziyangfu.github.io/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/image-20230506134756517.png">
+  
+  
+  
+  <title>从helloworld看程序的编译与链接 - 聚焦Linux内核与C++中间件</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ziyangfu.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","app_key":"PXw2Tf5wmgP8pwaWaayNPuiU","server_url":"https://wzw3bc90.lc-cn-e1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>好好学习， 天天向上</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="从helloworld看程序的编译与链接"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-05-06 10:58" pubdate>
+          2023年5月6日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          19k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          159 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">从helloworld看程序的编译与链接</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="从hello-world看程序的编译与链接"><a href="#从hello-world看程序的编译与链接" class="headerlink" title="从hello world看程序的编译与链接"></a>从hello world看程序的编译与链接</h1><p>众所周知，程序的编译分为四个阶段，分别为预处理、编译、汇编与链接。以下从一个简单的hello world剖析程序的编译过程。</p>
+<h3 id="1-程序的编译与链接"><a href="#1-程序的编译与链接" class="headerlink" title="1. 程序的编译与链接"></a>1. 程序的编译与链接</h3><p>源代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// @file: test.c</span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>	<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;hello world\n&quot;</span>);<br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>预处理</strong></p>
+<p>处理源代码中以<code>#</code>开始的预编译指令，如<code>#include</code>、<code>#define</code>等。</p>
+<p>gcc编译器对应程序：<code>cc1</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc -E ./test.c -o ./test.i<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs bash">@file: test.i<br><br><span class="hljs-comment"># 1 &quot;./test.c&quot;</span><br><span class="hljs-comment"># 1 &quot;&lt;built-in&gt;&quot;</span><br><span class="hljs-comment"># 1 &quot;&lt;command-line&gt;&quot;</span><br><span class="hljs-comment"># 31 &quot;&lt;command-line&gt;&quot;</span><br><span class="hljs-comment"># 1 &quot;/usr/include/stdc-predef.h&quot; 1 3 4</span><br><span class="hljs-comment"># 32 &quot;&lt;command-line&gt;&quot; 2</span><br><span class="hljs-comment"># 1 &quot;./test.c&quot;</span><br><span class="hljs-comment"># 1 &quot;/usr/include/stdio.h&quot; 1 3 4</span><br><span class="hljs-comment"># 27 &quot;/usr/include/stdio.h&quot; 3 4</span><br><span class="hljs-comment"># 1 &quot;/usr/include/x86_64-linux-gnu/bits/libc-header-start.h&quot; 1 3 4</span><br><span class="hljs-comment"># 33 &quot;/usr/include/x86_64-linux-gnu/bits/libc-header-start.h&quot; 3 4</span><br><span class="hljs-comment"># 1 &quot;/usr/include/features.h&quot; 1 3 4</span><br><span class="hljs-comment"># 461 &quot;/usr/include/features.h&quot; 3 4</span><br><span class="hljs-comment"># 1 &quot;/usr/include/x86_64-linux-gnu/sys/cdefs.h&quot; 1 3 4</span><br><span class="hljs-comment"># 452 &quot;/usr/include/x86_64-linux-gnu/sys/cdefs.h&quot; 3 4</span><br><span class="hljs-comment"># 1 &quot;/usr/include/x86_64-linux-gnu/bits/wordsize.h&quot; 1 3 4</span><br><span class="hljs-comment"># 453 &quot;/usr/include/x86_64-linux-gnu/sys/cdefs.h&quot; 2 3 4</span><br><span class="hljs-comment"># 1 &quot;/usr/include/x86_64-linux-gnu/bits/long-double.h&quot; 1 3 4</span><br><span class="hljs-comment"># 454 &quot;/usr/include/x86_64-linux-gnu/sys/cdefs.h&quot; 2 3 4</span><br><span class="hljs-comment"># 462 &quot;/usr/include/features.h&quot; 2 3 4</span><br><span class="hljs-comment"># 485 &quot;/usr/include/features.h&quot; 3 4</span><br><span class="hljs-comment"># 1 &quot;/usr/include/x86_64-linux-gnu/gnu/stubs.h&quot; 1 3 4</span><br><span class="hljs-comment"># 10 &quot;/usr/include/x86_64-linux-gnu/gnu/stubs.h&quot; 3 4</span><br><span class="hljs-comment"># 1 &quot;/usr/include/x86_64-linux-gnu/gnu/stubs-64.h&quot; 1 3 4</span><br><span class="hljs-comment"># 11 &quot;/usr/include/x86_64-linux-gnu/gnu/stubs.h&quot; 2 3 4</span><br><span class="hljs-comment"># 486 &quot;/usr/include/features.h&quot; 2 3 4</span><br><span class="hljs-comment"># 34 &quot;/usr/include/x86_64-linux-gnu/bits/libc-header-start.h&quot; 2 3 4</span><br><span class="hljs-comment"># 28 &quot;/usr/include/stdio.h&quot; 2 3 4</span><br>......<br></code></pre></td></tr></table></figure>
+
+<p><strong>编译</strong></p>
+<p>编译过程即将预处理后的文件进行一系列的词法分析、语法分析、语义分析以及优化，之后生成相应的汇编代码。</p>
+<p>gcc编译器对应程序：<code>cc1</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc -S test.i -o test.s<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs bash">@file: test.s<br>	<br>	.file	<span class="hljs-string">&quot;test.c&quot;</span><br>	.text<br>	.section	.rodata<br>.LC0:<br>	.string	<span class="hljs-string">&quot;hello world&quot;</span><br>	.text<br>	.globl	main<br>	.<span class="hljs-built_in">type</span>	main, @<span class="hljs-keyword">function</span><br>main:<br>.LFB0:<br>	.cfi_startproc<br>	endbr64<br>	pushq	%rbp<br>	.cfi_def_cfa_offset 16<br>	.cfi_offset 6, -16<br>	movq	%rsp, %rbp<br>	.cfi_def_cfa_register 6<br>	leaq	.LC0(%rip), %rdi<br>	call	puts@PLT<br>	movl	<span class="hljs-variable">$0</span>, %eax<br>	popq	%rbp<br>	.cfi_def_cfa 7, 8<br>	ret<br>	.cfi_endproc<br>.LFE0:<br>	.size	main, .-main<br>	.ident	<span class="hljs-string">&quot;GCC: (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0&quot;</span><br>	.section	.note.GNU-stack,<span class="hljs-string">&quot;&quot;</span>,@progbits<br>	.section	.note.gnu.property,<span class="hljs-string">&quot;a&quot;</span><br>	.align 8<br>	.long	 1f - 0f<br>	.long	 4f - 1f<br>	.long	 5<br>0:<br>	.string	 <span class="hljs-string">&quot;GNU&quot;</span><br>1:<br>	.align 8<br>	.long	 0xc0000002<br>	.long	 3f - 2f<br>2:<br>	.long	 0x3<br>3:<br>	.align 8<br>4:<br></code></pre></td></tr></table></figure>
+
+<p><strong>汇编</strong></p>
+<p>将汇编指令转变为机器指令。</p>
+<p>gcc编译器对应程序：<code>as</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc -c test.s -o test.o<br></code></pre></td></tr></table></figure>
+
+<p>使用<code>readelf -a ./test.o</code>读取目标文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><code class="hljs bash">@file: test.o<br><br>ELF Header:<br>  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 <br>  Class:                             ELF64<br>  Data:                              2<span class="hljs-string">&#x27;s complement, little endian</span><br><span class="hljs-string">  Version:                           1 (current)</span><br><span class="hljs-string">  OS/ABI:                            UNIX - System V</span><br><span class="hljs-string">  ABI Version:                       0</span><br><span class="hljs-string">  Type:                              REL (Relocatable file)</span><br><span class="hljs-string">  Machine:                           Advanced Micro Devices X86-64</span><br><span class="hljs-string">  Version:                           0x1</span><br><span class="hljs-string">  Entry point address:               0x0</span><br><span class="hljs-string">  Start of program headers:          0 (bytes into file)</span><br><span class="hljs-string">  Start of section headers:          784 (bytes into file)</span><br><span class="hljs-string">  Flags:                             0x0</span><br><span class="hljs-string">  Size of this header:               64 (bytes)</span><br><span class="hljs-string">  Size of program headers:           0 (bytes)</span><br><span class="hljs-string">  Number of program headers:         0</span><br><span class="hljs-string">  Size of section headers:           64 (bytes)</span><br><span class="hljs-string">  Number of section headers:         14</span><br><span class="hljs-string">  Section header string table index: 13</span><br><span class="hljs-string"></span><br><span class="hljs-string">Section Headers:</span><br><span class="hljs-string">  [Nr] Name              Type             Address           Offset</span><br><span class="hljs-string">       Size              EntSize          Flags  Link  Info  Align</span><br><span class="hljs-string">  [ 0]                   NULL             0000000000000000  00000000</span><br><span class="hljs-string">       0000000000000000  0000000000000000           0     0     0</span><br><span class="hljs-string">  [ 1] .text             PROGBITS         0000000000000000  00000040</span><br><span class="hljs-string">       000000000000001b  0000000000000000  AX       0     0     1</span><br><span class="hljs-string">  [ 2] .rela.text        RELA             0000000000000000  00000250</span><br><span class="hljs-string">       0000000000000030  0000000000000018   I      11     1     8</span><br><span class="hljs-string">  [ 3] .data             PROGBITS         0000000000000000  0000005b</span><br><span class="hljs-string">       0000000000000000  0000000000000000  WA       0     0     1</span><br><span class="hljs-string">  [ 4] .bss              NOBITS           0000000000000000  0000005b</span><br><span class="hljs-string">       0000000000000000  0000000000000000  WA       0     0     1</span><br><span class="hljs-string">  [ 5] .rodata           PROGBITS         0000000000000000  0000005b</span><br><span class="hljs-string">       000000000000000c  0000000000000000   A       0     0     1</span><br><span class="hljs-string">  [ 6] .comment          PROGBITS         0000000000000000  00000067</span><br><span class="hljs-string">       000000000000002c  0000000000000001  MS       0     0     1</span><br><span class="hljs-string">  [ 7] .note.GNU-stack   PROGBITS         0000000000000000  00000093</span><br><span class="hljs-string">       0000000000000000  0000000000000000           0     0     1</span><br><span class="hljs-string">  [ 8] .note.gnu.propert NOTE             0000000000000000  00000098</span><br><span class="hljs-string">       0000000000000020  0000000000000000   A       0     0     8</span><br><span class="hljs-string">  [ 9] .eh_frame         PROGBITS         0000000000000000  000000b8</span><br><span class="hljs-string">       0000000000000038  0000000000000000   A       0     0     8</span><br><span class="hljs-string">  [10] .rela.eh_frame    RELA             0000000000000000  00000280</span><br><span class="hljs-string">       0000000000000018  0000000000000018   I      11     9     8</span><br><span class="hljs-string">  [11] .symtab           SYMTAB           0000000000000000  000000f0</span><br><span class="hljs-string">       0000000000000138  0000000000000018          12    10     8</span><br><span class="hljs-string">  [12] .strtab           STRTAB           0000000000000000  00000228</span><br><span class="hljs-string">       0000000000000028  0000000000000000           0     0     1</span><br><span class="hljs-string">  [13] .shstrtab         STRTAB           0000000000000000  00000298</span><br><span class="hljs-string">       0000000000000074  0000000000000000           0     0     1</span><br><span class="hljs-string">Key to Flags:</span><br><span class="hljs-string">  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),</span><br><span class="hljs-string">  L (link order), O (extra OS processing required), G (group), T (TLS),</span><br><span class="hljs-string">  C (compressed), x (unknown), o (OS specific), E (exclude),</span><br><span class="hljs-string">  l (large), p (processor specific)</span><br><span class="hljs-string"></span><br><span class="hljs-string">There are no section groups in this file.</span><br><span class="hljs-string"></span><br><span class="hljs-string">There are no program headers in this file.</span><br><span class="hljs-string"></span><br><span class="hljs-string">There is no dynamic section in this file.</span><br><span class="hljs-string"></span><br><span class="hljs-string">Relocation section &#x27;</span>.rela.text<span class="hljs-string">&#x27; at offset 0x250 contains 2 entries:</span><br><span class="hljs-string">  Offset          Info           Type           Sym. Value    Sym. Name + Addend</span><br><span class="hljs-string">00000000000b  000500000002 R_X86_64_PC32     0000000000000000 .rodata - 4</span><br><span class="hljs-string">000000000010  000c00000004 R_X86_64_PLT32    0000000000000000 puts - 4</span><br><span class="hljs-string"></span><br><span class="hljs-string">Relocation section &#x27;</span>.rela.eh_frame<span class="hljs-string">&#x27; at offset 0x280 contains 1 entry:</span><br><span class="hljs-string">  Offset          Info           Type           Sym. Value    Sym. Name + Addend</span><br><span class="hljs-string">000000000020  000200000002 R_X86_64_PC32     0000000000000000 .text + 0</span><br><span class="hljs-string"></span><br><span class="hljs-string">The decoding of unwind sections for machine type Advanced Micro Devices X86-64 is not currently supported.</span><br><span class="hljs-string"># 现在符号表的地址值都是0</span><br><span class="hljs-string">Symbol table &#x27;</span>.symtab<span class="hljs-string">&#x27; contains 13 entries:</span><br><span class="hljs-string">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="hljs-string">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="hljs-string">     1: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS test.c</span><br><span class="hljs-string">     2: 0000000000000000     0 SECTION LOCAL  DEFAULT    1 </span><br><span class="hljs-string">     3: 0000000000000000     0 SECTION LOCAL  DEFAULT    3 </span><br><span class="hljs-string">     4: 0000000000000000     0 SECTION LOCAL  DEFAULT    4 </span><br><span class="hljs-string">     5: 0000000000000000     0 SECTION LOCAL  DEFAULT    5 </span><br><span class="hljs-string">     6: 0000000000000000     0 SECTION LOCAL  DEFAULT    7 </span><br><span class="hljs-string">     7: 0000000000000000     0 SECTION LOCAL  DEFAULT    8 </span><br><span class="hljs-string">     8: 0000000000000000     0 SECTION LOCAL  DEFAULT    9 </span><br><span class="hljs-string">     9: 0000000000000000     0 SECTION LOCAL  DEFAULT    6 </span><br><span class="hljs-string">    10: 0000000000000000    27 FUNC    GLOBAL DEFAULT    1 main</span><br><span class="hljs-string">    11: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND _GLOBAL_OFFSET_TABLE_</span><br><span class="hljs-string">    12: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND puts</span><br><span class="hljs-string"></span><br><span class="hljs-string">No version information found in this file.</span><br><span class="hljs-string"></span><br><span class="hljs-string">Displaying notes found in: .note.gnu.property</span><br><span class="hljs-string">  Owner                Data size 	Description</span><br><span class="hljs-string">  GNU                  0x00000010	NT_GNU_PROPERTY_TYPE_0</span><br><span class="hljs-string">      Properties: x86 feature: IBT, SHSTK</span><br><span class="hljs-string"></span><br></code></pre></td></tr></table></figure>
+
+<p><code>file ./test.o</code>输出</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./test.o: ELF 64-bit LSB relocatable, x86-64, version 1 (SYSV), not stripped<br></code></pre></td></tr></table></figure>
+
+<p><strong>链接</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc ./test.o -o ./test<br></code></pre></td></tr></table></figure>
+
+<p>使用<code>readelf -a ./test</code>读取目标文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br></pre></td><td class="code"><pre><code class="hljs bash">ELF Header:<br>  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 <br>  Class:                             ELF64<br>  Data:                              2<span class="hljs-string">&#x27;s complement, little endian</span><br><span class="hljs-string">  Version:                           1 (current)</span><br><span class="hljs-string">  OS/ABI:                            UNIX - System V</span><br><span class="hljs-string">  ABI Version:                       0</span><br><span class="hljs-string">  Type:                              DYN (Shared object file)</span><br><span class="hljs-string">  Machine:                           Advanced Micro Devices X86-64</span><br><span class="hljs-string">  Version:                           0x1</span><br><span class="hljs-string">  Entry point address:               0x1060</span><br><span class="hljs-string">  Start of program headers:          64 (bytes into file)</span><br><span class="hljs-string">  Start of section headers:          14712 (bytes into file)</span><br><span class="hljs-string">  Flags:                             0x0</span><br><span class="hljs-string">  Size of this header:               64 (bytes)</span><br><span class="hljs-string">  Size of program headers:           56 (bytes)</span><br><span class="hljs-string">  Number of program headers:         13</span><br><span class="hljs-string">  Size of section headers:           64 (bytes)</span><br><span class="hljs-string">  Number of section headers:         31</span><br><span class="hljs-string">  Section header string table index: 30</span><br><span class="hljs-string"></span><br><span class="hljs-string">Section Headers:</span><br><span class="hljs-string">  [Nr] Name              Type             Address           Offset</span><br><span class="hljs-string">       Size              EntSize          Flags  Link  Info  Align</span><br><span class="hljs-string">  [ 0]                   NULL             0000000000000000  00000000</span><br><span class="hljs-string">       0000000000000000  0000000000000000           0     0     0</span><br><span class="hljs-string">  [ 1] .interp           PROGBITS         0000000000000318  00000318</span><br><span class="hljs-string">       000000000000001c  0000000000000000   A       0     0     1</span><br><span class="hljs-string">  [ 2] .note.gnu.propert NOTE             0000000000000338  00000338</span><br><span class="hljs-string">       0000000000000020  0000000000000000   A       0     0     8</span><br><span class="hljs-string">  [ 3] .note.gnu.build-i NOTE             0000000000000358  00000358</span><br><span class="hljs-string">       0000000000000024  0000000000000000   A       0     0     4</span><br><span class="hljs-string">  [ 4] .note.ABI-tag     NOTE             000000000000037c  0000037c</span><br><span class="hljs-string">       0000000000000020  0000000000000000   A       0     0     4</span><br><span class="hljs-string">  [ 5] .gnu.hash         GNU_HASH         00000000000003a0  000003a0</span><br><span class="hljs-string">       0000000000000024  0000000000000000   A       6     0     8</span><br><span class="hljs-string">  [ 6] .dynsym           DYNSYM           00000000000003c8  000003c8</span><br><span class="hljs-string">       00000000000000a8  0000000000000018   A       7     1     8</span><br><span class="hljs-string">  [ 7] .dynstr           STRTAB           0000000000000470  00000470</span><br><span class="hljs-string">       0000000000000082  0000000000000000   A       0     0     1</span><br><span class="hljs-string">  [ 8] .gnu.version      VERSYM           00000000000004f2  000004f2</span><br><span class="hljs-string">       000000000000000e  0000000000000002   A       6     0     2</span><br><span class="hljs-string">  [ 9] .gnu.version_r    VERNEED          0000000000000500  00000500</span><br><span class="hljs-string">       0000000000000020  0000000000000000   A       7     1     8</span><br><span class="hljs-string">  [10] .rela.dyn         RELA             0000000000000520  00000520</span><br><span class="hljs-string">       00000000000000c0  0000000000000018   A       6     0     8</span><br><span class="hljs-string">  [11] .rela.plt         RELA             00000000000005e0  000005e0</span><br><span class="hljs-string">       0000000000000018  0000000000000018  AI       6    24     8</span><br><span class="hljs-string">  [12] .init             PROGBITS         0000000000001000  00001000</span><br><span class="hljs-string">       000000000000001b  0000000000000000  AX       0     0     4</span><br><span class="hljs-string">  [13] .plt              PROGBITS         0000000000001020  00001020</span><br><span class="hljs-string">       0000000000000020  0000000000000010  AX       0     0     16</span><br><span class="hljs-string">  [14] .plt.got          PROGBITS         0000000000001040  00001040</span><br><span class="hljs-string">       0000000000000010  0000000000000010  AX       0     0     16</span><br><span class="hljs-string">  [15] .plt.sec          PROGBITS         0000000000001050  00001050</span><br><span class="hljs-string">       0000000000000010  0000000000000010  AX       0     0     16</span><br><span class="hljs-string">  [16] .text             PROGBITS         0000000000001060  00001060</span><br><span class="hljs-string">       0000000000000185  0000000000000000  AX       0     0     16</span><br><span class="hljs-string">  [17] .fini             PROGBITS         00000000000011e8  000011e8</span><br><span class="hljs-string">       000000000000000d  0000000000000000  AX       0     0     4</span><br><span class="hljs-string">  [18] .rodata           PROGBITS         0000000000002000  00002000</span><br><span class="hljs-string">       0000000000000010  0000000000000000   A       0     0     4</span><br><span class="hljs-string">  [19] .eh_frame_hdr     PROGBITS         0000000000002010  00002010</span><br><span class="hljs-string">       0000000000000044  0000000000000000   A       0     0     4</span><br><span class="hljs-string">  [20] .eh_frame         PROGBITS         0000000000002058  00002058</span><br><span class="hljs-string">       0000000000000108  0000000000000000   A       0     0     8</span><br><span class="hljs-string">  [21] .init_array       INIT_ARRAY       0000000000003db8  00002db8</span><br><span class="hljs-string">       0000000000000008  0000000000000008  WA       0     0     8</span><br><span class="hljs-string">  [22] .fini_array       FINI_ARRAY       0000000000003dc0  00002dc0</span><br><span class="hljs-string">       0000000000000008  0000000000000008  WA       0     0     8</span><br><span class="hljs-string">  [23] .dynamic          DYNAMIC          0000000000003dc8  00002dc8</span><br><span class="hljs-string">       00000000000001f0  0000000000000010  WA       7     0     8</span><br><span class="hljs-string">  [24] .got              PROGBITS         0000000000003fb8  00002fb8</span><br><span class="hljs-string">       0000000000000048  0000000000000008  WA       0     0     8</span><br><span class="hljs-string">  [25] .data             PROGBITS         0000000000004000  00003000</span><br><span class="hljs-string">       0000000000000010  0000000000000000  WA       0     0     8</span><br><span class="hljs-string">  [26] .bss              NOBITS           0000000000004010  00003010</span><br><span class="hljs-string">       0000000000000008  0000000000000000  WA       0     0     1</span><br><span class="hljs-string">  [27] .comment          PROGBITS         0000000000000000  00003010</span><br><span class="hljs-string">       000000000000002b  0000000000000001  MS       0     0     1</span><br><span class="hljs-string">  [28] .symtab           SYMTAB           0000000000000000  00003040</span><br><span class="hljs-string">       0000000000000618  0000000000000018          29    46     8</span><br><span class="hljs-string">  [29] .strtab           STRTAB           0000000000000000  00003658</span><br><span class="hljs-string">       0000000000000202  0000000000000000           0     0     1</span><br><span class="hljs-string">  [30] .shstrtab         STRTAB           0000000000000000  0000385a</span><br><span class="hljs-string">       000000000000011a  0000000000000000           0     0     1</span><br><span class="hljs-string">Key to Flags:</span><br><span class="hljs-string">  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),</span><br><span class="hljs-string">  L (link order), O (extra OS processing required), G (group), T (TLS),</span><br><span class="hljs-string">  C (compressed), x (unknown), o (OS specific), E (exclude),</span><br><span class="hljs-string">  l (large), p (processor specific)</span><br><span class="hljs-string"></span><br><span class="hljs-string">There are no section groups in this file.</span><br><span class="hljs-string"></span><br><span class="hljs-string">Program Headers:</span><br><span class="hljs-string">  Type           Offset             VirtAddr           PhysAddr</span><br><span class="hljs-string">                 FileSiz            MemSiz              Flags  Align</span><br><span class="hljs-string">  PHDR           0x0000000000000040 0x0000000000000040 0x0000000000000040</span><br><span class="hljs-string">                 0x00000000000002d8 0x00000000000002d8  R      0x8</span><br><span class="hljs-string">  INTERP         0x0000000000000318 0x0000000000000318 0x0000000000000318</span><br><span class="hljs-string">                 0x000000000000001c 0x000000000000001c  R      0x1</span><br><span class="hljs-string">      [Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</span><br><span class="hljs-string">  LOAD           0x0000000000000000 0x0000000000000000 0x0000000000000000</span><br><span class="hljs-string">                 0x00000000000005f8 0x00000000000005f8  R      0x1000</span><br><span class="hljs-string">  LOAD           0x0000000000001000 0x0000000000001000 0x0000000000001000</span><br><span class="hljs-string">                 0x00000000000001f5 0x00000000000001f5  R E    0x1000</span><br><span class="hljs-string">  LOAD           0x0000000000002000 0x0000000000002000 0x0000000000002000</span><br><span class="hljs-string">                 0x0000000000000160 0x0000000000000160  R      0x1000</span><br><span class="hljs-string">  LOAD           0x0000000000002db8 0x0000000000003db8 0x0000000000003db8</span><br><span class="hljs-string">                 0x0000000000000258 0x0000000000000260  RW     0x1000</span><br><span class="hljs-string">  DYNAMIC        0x0000000000002dc8 0x0000000000003dc8 0x0000000000003dc8</span><br><span class="hljs-string">                 0x00000000000001f0 0x00000000000001f0  RW     0x8</span><br><span class="hljs-string">  NOTE           0x0000000000000338 0x0000000000000338 0x0000000000000338</span><br><span class="hljs-string">                 0x0000000000000020 0x0000000000000020  R      0x8</span><br><span class="hljs-string">  NOTE           0x0000000000000358 0x0000000000000358 0x0000000000000358</span><br><span class="hljs-string">                 0x0000000000000044 0x0000000000000044  R      0x4</span><br><span class="hljs-string">  GNU_PROPERTY   0x0000000000000338 0x0000000000000338 0x0000000000000338</span><br><span class="hljs-string">                 0x0000000000000020 0x0000000000000020  R      0x8</span><br><span class="hljs-string">  GNU_EH_FRAME   0x0000000000002010 0x0000000000002010 0x0000000000002010</span><br><span class="hljs-string">                 0x0000000000000044 0x0000000000000044  R      0x4</span><br><span class="hljs-string">  GNU_STACK      0x0000000000000000 0x0000000000000000 0x0000000000000000</span><br><span class="hljs-string">                 0x0000000000000000 0x0000000000000000  RW     0x10</span><br><span class="hljs-string">  GNU_RELRO      0x0000000000002db8 0x0000000000003db8 0x0000000000003db8</span><br><span class="hljs-string">                 0x0000000000000248 0x0000000000000248  R      0x1</span><br><span class="hljs-string"></span><br><span class="hljs-string"> Section to Segment mapping:</span><br><span class="hljs-string">  Segment Sections...</span><br><span class="hljs-string">   00     </span><br><span class="hljs-string">   01     .interp </span><br><span class="hljs-string">   02     .interp .note.gnu.property .note.gnu.build-id .note.ABI-tag .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rela.dyn .rela.plt </span><br><span class="hljs-string">   03     .init .plt .plt.got .plt.sec .text .fini </span><br><span class="hljs-string">   04     .rodata .eh_frame_hdr .eh_frame </span><br><span class="hljs-string">   05     .init_array .fini_array .dynamic .got .data .bss </span><br><span class="hljs-string">   06     .dynamic </span><br><span class="hljs-string">   07     .note.gnu.property </span><br><span class="hljs-string">   08     .note.gnu.build-id .note.ABI-tag </span><br><span class="hljs-string">   09     .note.gnu.property </span><br><span class="hljs-string">   10     .eh_frame_hdr </span><br><span class="hljs-string">   11     </span><br><span class="hljs-string">   12     .init_array .fini_array .dynamic .got </span><br><span class="hljs-string"></span><br><span class="hljs-string">Dynamic section at offset 0x2dc8 contains 27 entries:</span><br><span class="hljs-string">  Tag        Type                         Name/Value</span><br><span class="hljs-string"> 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]</span><br><span class="hljs-string"> 0x000000000000000c (INIT)               0x1000</span><br><span class="hljs-string"> 0x000000000000000d (FINI)               0x11e8</span><br><span class="hljs-string"> 0x0000000000000019 (INIT_ARRAY)         0x3db8</span><br><span class="hljs-string"> 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)</span><br><span class="hljs-string"> 0x000000000000001a (FINI_ARRAY)         0x3dc0</span><br><span class="hljs-string"> 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)</span><br><span class="hljs-string"> 0x000000006ffffef5 (GNU_HASH)           0x3a0</span><br><span class="hljs-string"> 0x0000000000000005 (STRTAB)             0x470</span><br><span class="hljs-string"> 0x0000000000000006 (SYMTAB)             0x3c8</span><br><span class="hljs-string"> 0x000000000000000a (STRSZ)              130 (bytes)</span><br><span class="hljs-string"> 0x000000000000000b (SYMENT)             24 (bytes)</span><br><span class="hljs-string"> 0x0000000000000015 (DEBUG)              0x0</span><br><span class="hljs-string"> 0x0000000000000003 (PLTGOT)             0x3fb8</span><br><span class="hljs-string"> 0x0000000000000002 (PLTRELSZ)           24 (bytes)</span><br><span class="hljs-string"> 0x0000000000000014 (PLTREL)             RELA</span><br><span class="hljs-string"> 0x0000000000000017 (JMPREL)             0x5e0</span><br><span class="hljs-string"> 0x0000000000000007 (RELA)               0x520</span><br><span class="hljs-string"> 0x0000000000000008 (RELASZ)             192 (bytes)</span><br><span class="hljs-string"> 0x0000000000000009 (RELAENT)            24 (bytes)</span><br><span class="hljs-string"> 0x000000000000001e (FLAGS)              BIND_NOW</span><br><span class="hljs-string"> 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE</span><br><span class="hljs-string"> 0x000000006ffffffe (VERNEED)            0x500</span><br><span class="hljs-string"> 0x000000006fffffff (VERNEEDNUM)         1</span><br><span class="hljs-string"> 0x000000006ffffff0 (VERSYM)             0x4f2</span><br><span class="hljs-string"> 0x000000006ffffff9 (RELACOUNT)          3</span><br><span class="hljs-string"> 0x0000000000000000 (NULL)               0x0</span><br><span class="hljs-string"></span><br><span class="hljs-string">Relocation section &#x27;</span>.rela.dyn<span class="hljs-string">&#x27; at offset 0x520 contains 8 entries:</span><br><span class="hljs-string">  Offset          Info           Type           Sym. Value    Sym. Name + Addend</span><br><span class="hljs-string">000000003db8  000000000008 R_X86_64_RELATIVE                    1140</span><br><span class="hljs-string">000000003dc0  000000000008 R_X86_64_RELATIVE                    1100</span><br><span class="hljs-string">000000004008  000000000008 R_X86_64_RELATIVE                    4008</span><br><span class="hljs-string">000000003fd8  000100000006 R_X86_64_GLOB_DAT 0000000000000000 _ITM_deregisterTMClone + 0</span><br><span class="hljs-string">000000003fe0  000300000006 R_X86_64_GLOB_DAT 0000000000000000 __libc_start_main@GLIBC_2.2.5 + 0</span><br><span class="hljs-string">000000003fe8  000400000006 R_X86_64_GLOB_DAT 0000000000000000 __gmon_start__ + 0</span><br><span class="hljs-string">000000003ff0  000500000006 R_X86_64_GLOB_DAT 0000000000000000 _ITM_registerTMCloneTa + 0</span><br><span class="hljs-string">000000003ff8  000600000006 R_X86_64_GLOB_DAT 0000000000000000 __cxa_finalize@GLIBC_2.2.5 + 0</span><br><span class="hljs-string"></span><br><span class="hljs-string">Relocation section &#x27;</span>.rela.plt<span class="hljs-string">&#x27; at offset 0x5e0 contains 1 entry:</span><br><span class="hljs-string">  Offset          Info           Type           Sym. Value    Sym. Name + Addend</span><br><span class="hljs-string">000000003fd0  000200000007 R_X86_64_JUMP_SLO 0000000000000000 puts@GLIBC_2.2.5 + 0</span><br><span class="hljs-string"></span><br><span class="hljs-string">The decoding of unwind sections for machine type Advanced Micro Devices X86-64 is not currently supported.</span><br><span class="hljs-string"></span><br><span class="hljs-string">Symbol table &#x27;</span>.dynsym<span class="hljs-string">&#x27; contains 7 entries:</span><br><span class="hljs-string">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="hljs-string">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="hljs-string">     1: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTab</span><br><span class="hljs-string">     2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND puts@GLIBC_2.2.5 (2)</span><br><span class="hljs-string">     3: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main@GLIBC_2.2.5 (2)</span><br><span class="hljs-string">     4: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__</span><br><span class="hljs-string">     5: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable</span><br><span class="hljs-string">     6: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (2)</span><br><span class="hljs-string"># 现在符号表的地址值不空了</span><br><span class="hljs-string">Symbol table &#x27;</span>.symtab<span class="hljs-string">&#x27; contains 65 entries:</span><br><span class="hljs-string">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="hljs-string">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="hljs-string">     1: 0000000000000318     0 SECTION LOCAL  DEFAULT    1 </span><br><span class="hljs-string">     2: 0000000000000338     0 SECTION LOCAL  DEFAULT    2 </span><br><span class="hljs-string">     3: 0000000000000358     0 SECTION LOCAL  DEFAULT    3 </span><br><span class="hljs-string">     4: 000000000000037c     0 SECTION LOCAL  DEFAULT    4 </span><br><span class="hljs-string">     5: 00000000000003a0     0 SECTION LOCAL  DEFAULT    5 </span><br><span class="hljs-string">     6: 00000000000003c8     0 SECTION LOCAL  DEFAULT    6 </span><br><span class="hljs-string">     7: 0000000000000470     0 SECTION LOCAL  DEFAULT    7 </span><br><span class="hljs-string">     8: 00000000000004f2     0 SECTION LOCAL  DEFAULT    8 </span><br><span class="hljs-string">     9: 0000000000000500     0 SECTION LOCAL  DEFAULT    9 </span><br><span class="hljs-string">    10: 0000000000000520     0 SECTION LOCAL  DEFAULT   10 </span><br><span class="hljs-string">    11: 00000000000005e0     0 SECTION LOCAL  DEFAULT   11 </span><br><span class="hljs-string">    12: 0000000000001000     0 SECTION LOCAL  DEFAULT   12 </span><br><span class="hljs-string">    13: 0000000000001020     0 SECTION LOCAL  DEFAULT   13 </span><br><span class="hljs-string">    14: 0000000000001040     0 SECTION LOCAL  DEFAULT   14 </span><br><span class="hljs-string">    15: 0000000000001050     0 SECTION LOCAL  DEFAULT   15 </span><br><span class="hljs-string">    16: 0000000000001060     0 SECTION LOCAL  DEFAULT   16 </span><br><span class="hljs-string">    17: 00000000000011e8     0 SECTION LOCAL  DEFAULT   17 </span><br><span class="hljs-string">    18: 0000000000002000     0 SECTION LOCAL  DEFAULT   18 </span><br><span class="hljs-string">    19: 0000000000002010     0 SECTION LOCAL  DEFAULT   19 </span><br><span class="hljs-string">    20: 0000000000002058     0 SECTION LOCAL  DEFAULT   20 </span><br><span class="hljs-string">    21: 0000000000003db8     0 SECTION LOCAL  DEFAULT   21 </span><br><span class="hljs-string">    22: 0000000000003dc0     0 SECTION LOCAL  DEFAULT   22 </span><br><span class="hljs-string">    23: 0000000000003dc8     0 SECTION LOCAL  DEFAULT   23 </span><br><span class="hljs-string">    24: 0000000000003fb8     0 SECTION LOCAL  DEFAULT   24 </span><br><span class="hljs-string">    25: 0000000000004000     0 SECTION LOCAL  DEFAULT   25 </span><br><span class="hljs-string">    26: 0000000000004010     0 SECTION LOCAL  DEFAULT   26 </span><br><span class="hljs-string">    27: 0000000000000000     0 SECTION LOCAL  DEFAULT   27 </span><br><span class="hljs-string">    28: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c</span><br><span class="hljs-string">    29: 0000000000001090     0 FUNC    LOCAL  DEFAULT   16 deregister_tm_clones</span><br><span class="hljs-string">    30: 00000000000010c0     0 FUNC    LOCAL  DEFAULT   16 register_tm_clones</span><br><span class="hljs-string">    31: 0000000000001100     0 FUNC    LOCAL  DEFAULT   16 __do_global_dtors_aux</span><br><span class="hljs-string">    32: 0000000000004010     1 OBJECT  LOCAL  DEFAULT   26 completed.8061</span><br><span class="hljs-string">    33: 0000000000003dc0     0 OBJECT  LOCAL  DEFAULT   22 __do_global_dtors_aux_fin</span><br><span class="hljs-string">    34: 0000000000001140     0 FUNC    LOCAL  DEFAULT   16 frame_dummy</span><br><span class="hljs-string">    35: 0000000000003db8     0 OBJECT  LOCAL  DEFAULT   21 __frame_dummy_init_array_</span><br><span class="hljs-string">    36: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS test.c</span><br><span class="hljs-string">    37: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c</span><br><span class="hljs-string">    38: 000000000000215c     0 OBJECT  LOCAL  DEFAULT   20 __FRAME_END__</span><br><span class="hljs-string">    39: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS </span><br><span class="hljs-string">    40: 0000000000003dc0     0 NOTYPE  LOCAL  DEFAULT   21 __init_array_end</span><br><span class="hljs-string">    41: 0000000000003dc8     0 OBJECT  LOCAL  DEFAULT   23 _DYNAMIC</span><br><span class="hljs-string">    42: 0000000000003db8     0 NOTYPE  LOCAL  DEFAULT   21 __init_array_start</span><br><span class="hljs-string">    43: 0000000000002010     0 NOTYPE  LOCAL  DEFAULT   19 __GNU_EH_FRAME_HDR</span><br><span class="hljs-string">    44: 0000000000003fb8     0 OBJECT  LOCAL  DEFAULT   24 _GLOBAL_OFFSET_TABLE_</span><br><span class="hljs-string">    45: 0000000000001000     0 FUNC    LOCAL  DEFAULT   12 _init</span><br><span class="hljs-string">    46: 00000000000011e0     5 FUNC    GLOBAL DEFAULT   16 __libc_csu_fini</span><br><span class="hljs-string">    47: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTab</span><br><span class="hljs-string">    48: 0000000000004000     0 NOTYPE  WEAK   DEFAULT   25 data_start</span><br><span class="hljs-string">    49: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND puts@@GLIBC_2.2.5</span><br><span class="hljs-string">    50: 0000000000004010     0 NOTYPE  GLOBAL DEFAULT   25 _edata</span><br><span class="hljs-string">    51: 00000000000011e8     0 FUNC    GLOBAL HIDDEN    17 _fini</span><br><span class="hljs-string">    52: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main@@GLIBC_</span><br><span class="hljs-string">    53: 0000000000004000     0 NOTYPE  GLOBAL DEFAULT   25 __data_start</span><br><span class="hljs-string">    54: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__</span><br><span class="hljs-string">    55: 0000000000004008     0 OBJECT  GLOBAL HIDDEN    25 __dso_handle</span><br><span class="hljs-string">    56: 0000000000002000     4 OBJECT  GLOBAL DEFAULT   18 _IO_stdin_used</span><br><span class="hljs-string">    57: 0000000000001170   101 FUNC    GLOBAL DEFAULT   16 __libc_csu_init</span><br><span class="hljs-string">    58: 0000000000004018     0 NOTYPE  GLOBAL DEFAULT   26 _end</span><br><span class="hljs-string">    59: 0000000000001060    47 FUNC    GLOBAL DEFAULT   16 _start</span><br><span class="hljs-string">    60: 0000000000004010     0 NOTYPE  GLOBAL DEFAULT   26 __bss_start</span><br><span class="hljs-string">    61: 0000000000001149    27 FUNC    GLOBAL DEFAULT   16 main</span><br><span class="hljs-string">    62: 0000000000004010     0 OBJECT  GLOBAL HIDDEN    25 __TMC_END__</span><br><span class="hljs-string">    63: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable</span><br><span class="hljs-string">    64: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@@GLIBC_2.2</span><br><span class="hljs-string"></span><br><span class="hljs-string">Histogram for `.gnu.hash&#x27;</span> bucket list length (total of 2 buckets):<br> Length  Number     % of total  Coverage<br>      0  1          ( 50.0%)<br>      1  1          ( 50.0%)    100.0%<br><br>Version symbols section <span class="hljs-string">&#x27;.gnu.version&#x27;</span> contains 7 entries:<br> Addr: 0x00000000000004f2  Offset: 0x0004f2  Link: 6 (.dynsym)<br>  000:   0 (*<span class="hljs-built_in">local</span>*)       0 (*<span class="hljs-built_in">local</span>*)       2 (GLIBC_2.2.5)   2 (GLIBC_2.2.5)<br>  004:   0 (*<span class="hljs-built_in">local</span>*)       0 (*<span class="hljs-built_in">local</span>*)       2 (GLIBC_2.2.5)<br><br>Version needs section <span class="hljs-string">&#x27;.gnu.version_r&#x27;</span> contains 1 entry:<br> Addr: 0x0000000000000500  Offset: 0x000500  Link: 7 (.dynstr)<br>  000000: Version: 1  File: libc.so.6  Cnt: 1<br>  0x0010:   Name: GLIBC_2.2.5  Flags: none  Version: 2<br><br>Displaying notes found <span class="hljs-keyword">in</span>: .note.gnu.property<br>  Owner                Data size 	Description<br>  GNU                  0x00000010	NT_GNU_PROPERTY_TYPE_0<br>      Properties: x86 feature: IBT, SHSTK<br><br>Displaying notes found <span class="hljs-keyword">in</span>: .note.gnu.build-id<br>  Owner                Data size 	Description<br>  GNU                  0x00000014	NT_GNU_BUILD_ID (unique build ID bitstring)<br>    Build ID: 1fbbe46df4a06904e20ce722c19cfdfcd468895d<br><br>Displaying notes found <span class="hljs-keyword">in</span>: .note.ABI-tag<br>  Owner                Data size 	Description<br>  GNU                  0x00000010	NT_GNU_ABI_TAG (ABI version tag)<br>    OS: Linux, ABI: 3.2.0<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-关于ELF格式"><a href="#2-关于ELF格式" class="headerlink" title="2. 关于ELF格式"></a>2. 关于ELF格式</h3><p>程序源代码编译后分为以下两种段：</p>
+<ul>
+<li><p>程序指令</p>
+<ul>
+<li><p>.text段</p>
+<p>执行语句的机器代码</p>
+</li>
+</ul>
+</li>
+<li><p>程序数据</p>
+<ul>
+<li><p>.data段</p>
+<p>初始化的全局变量和局部静态变量</p>
+</li>
+<li><p>.bss段</p>
+<p>未初始化的全局变量和局部静态变量。.bss段这是为未初始化的全局变量与局部静态变量预留位置，并没有内容，所以在文件中也不占据空间。</p>
+</li>
+</ul>
+</li>
+</ul>
+<img src="/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/image-20230506134756517.png" srcset="/img/loading.gif" lazyload class title="image-20230506134756517">
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看ELF文件的代码段、数据段和BSS段长度</span><br>size ./test<br><span class="hljs-comment">#    text	   data	    bss	    dec	    hex	filename</span><br><span class="hljs-comment">#    1565	    600	      8	   2173	    87d	./test</span><br><br><span class="hljs-comment"># 查看目标文件的结构与内容</span><br>objdump -h ./test<br><br><span class="hljs-comment"># 使用nm查看符号</span><br>nm ./test<br><span class="hljs-comment"># 输出</span><br>    0000000000004010 B __bss_start<br>    0000000000004010 b completed.8061<br>                     w __cxa_finalize@@GLIBC_2.2.5<br>    0000000000004000 D __data_start<br>	<span class="hljs-comment"># ......</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-参考文档"><a href="#3-参考文档" class="headerlink" title="3. 参考文档"></a>3. 参考文档</h3><p>《程序员的自我修养—链接、装载与库》</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
+      
+        <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6/">#计算机科学</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>从helloworld看程序的编译与链接</div>
+      <div>http://ziyangfu.github.io/2023/05/06/从helloworld看程序的编译与链接/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>FZY</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年5月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/05/05/%E5%85%B3%E4%BA%8ETCP-options%E4%B8%AD%E7%9A%84timestamps/" title="关于TCP_options中的timestamps">
+                        <span class="hidden-mobile">关于TCP_options中的timestamps</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","appKey":"PXw2Tf5wmgP8pwaWaayNPuiU","path":"window.location.pathname","placeholder":"说点什么吧","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
