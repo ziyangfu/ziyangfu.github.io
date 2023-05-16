@@ -4,6 +4,29 @@
   
   
   <entry>
+    <title>从Linux内核看TCP超时重传机制</title>
+    <link href="/2023/05/16/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BTCP%E8%B6%85%E6%97%B6%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6/"/>
+    <url>/2023/05/16/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BTCP%E8%B6%85%E6%97%B6%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6/</url>
+    
+    <content type="html"><![CDATA[<h1 id="从Linux内核看TCP超时重传机制"><a href="#从Linux内核看TCP超时重传机制" class="headerlink" title="从Linux内核看TCP超时重传机制"></a>从Linux内核看TCP超时重传机制</h1><h2 id="1-TCP超时重传原理"><a href="#1-TCP超时重传原理" class="headerlink" title="1. TCP超时重传原理"></a>1. TCP超时重传原理</h2><p>RTO</p><p>RTT</p><p>快重传</p><h2 id="2-Linux内核网络协议栈重传机制实现"><a href="#2-Linux内核网络协议栈重传机制实现" class="headerlink" title="2. Linux内核网络协议栈重传机制实现"></a>2. Linux内核网络协议栈重传机制实现</h2><h2 id="3-如何观测重传关键参数"><a href="#3-如何观测重传关键参数" class="headerlink" title="3. 如何观测重传关键参数"></a>3. 如何观测重传关键参数</h2><h3 id="3-1-传统工具"><a href="#3-1-传统工具" class="headerlink" title="3.1 传统工具"></a>3.1 传统工具</h3><h3 id="3-2-现有eBPF技术工具"><a href="#3-2-现有eBPF技术工具" class="headerlink" title="3.2 现有eBPF技术工具"></a>3.2 现有eBPF技术工具</h3><h3 id="3-3-开发采用eBPF技术的小工具"><a href="#3-3-开发采用eBPF技术的小工具" class="headerlink" title="3.3 开发采用eBPF技术的小工具"></a>3.3 开发采用eBPF技术的小工具</h3><h2 id="4-总结"><a href="#4-总结" class="headerlink" title="4. 总结"></a>4. 总结</h2><h2 id="5-参考资料"><a href="#5-参考资料" class="headerlink" title="5. 参考资料"></a>5. 参考资料</h2><ol><li><a href="https://zhuanlan.zhihu.com/p/101702312">详解 TCP 超时与重传机制</a></li></ol>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>网络</tag>
+      
+      <tag>原创</tag>
+      
+      <tag>Linux内核</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>数据分发服务开源实现FastDDS</title>
     <link href="/2023/05/15/%E6%95%B0%E6%8D%AE%E5%88%86%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%BC%80%E6%BA%90%E5%AE%9E%E7%8E%B0FastDDS/"/>
     <url>/2023/05/15/%E6%95%B0%E6%8D%AE%E5%88%86%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%BC%80%E6%BA%90%E5%AE%9E%E7%8E%B0FastDDS/</url>
