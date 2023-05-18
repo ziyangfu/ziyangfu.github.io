@@ -16,24 +16,23 @@
   <meta name="author" content="FZY">
   <meta name="keywords" content="">
   
-    <meta name="description" content="从Linux内核看TCP超时重传机制1. TCP超时重传原理RTO RTT 快重传 2. Linux内核网络协议栈重传机制实现3. 如何观测重传关键参数3.1 传统工具3.2 现有eBPF技术工具3.3 开发采用eBPF技术的小工具4. 总结5. 参考资料 详解 TCP 超时与重传机制">
+    <meta name="description" content="Linux网络协议栈TCP优化选项TODO: 网络协议栈优化第一步：调参 目的：列出Linux协议栈中关于TCP优化选项含义 1234# 查看cat &#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;tcp*# 设置sysctl net.ipv4.tcp_*  TCP选项   序号 参数 含义                                                 参考资料 Linux">
 <meta property="og:type" content="article">
-<meta property="og:title" content="从Linux内核看TCP超时重传机制">
-<meta property="og:url" content="http://ziyangfu.github.io/2023/05/16/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BTCP%E8%B6%85%E6%97%B6%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:title" content="Linux网络协议栈TCP优化选项">
+<meta property="og:url" content="http://ziyangfu.github.io/2023/05/18/Linux%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E6%A0%88TCP%E4%BC%98%E5%8C%96%E9%80%89%E9%A1%B9/index.html">
 <meta property="og:site_name" content="聚焦Linux内核与C++中间件">
-<meta property="og:description" content="从Linux内核看TCP超时重传机制1. TCP超时重传原理RTO RTT 快重传 2. Linux内核网络协议栈重传机制实现3. 如何观测重传关键参数3.1 传统工具3.2 现有eBPF技术工具3.3 开发采用eBPF技术的小工具4. 总结5. 参考资料 详解 TCP 超时与重传机制">
+<meta property="og:description" content="Linux网络协议栈TCP优化选项TODO: 网络协议栈优化第一步：调参 目的：列出Linux协议栈中关于TCP优化选项含义 1234# 查看cat &#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;tcp*# 设置sysctl net.ipv4.tcp_*  TCP选项   序号 参数 含义                                                 参考资料 Linux">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2023-05-16T02:35:21.000Z">
-<meta property="article:modified_time" content="2023-05-16T02:44:50.676Z">
+<meta property="article:published_time" content="2023-05-18T02:22:45.000Z">
+<meta property="article:modified_time" content="2023-05-18T02:45:45.774Z">
 <meta property="article:author" content="FZY">
 <meta property="article:tag" content="网络">
-<meta property="article:tag" content="原创">
-<meta property="article:tag" content="Linux内核">
+<meta property="article:tag" content="整合">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>从Linux内核看TCP超时重传机制 - 聚焦Linux内核与C++中间件</title>
+  <title>Linux网络协议栈TCP优化选项 - 聚焦Linux内核与C++中间件</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -216,7 +215,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="从Linux内核看TCP超时重传机制"></span>
+            <span id="subtitle" data-typed-text="Linux网络协议栈TCP优化选项"></span>
           
         </div>
 
@@ -227,8 +226,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2023-05-16 10:35" pubdate>
-          2023年5月16日 上午
+        <time datetime="2023-05-18 10:22" pubdate>
+          2023年5月18日 上午
         </time>
       </span>
     
@@ -239,7 +238,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          129 字
+          149 字
         
       </span>
     
@@ -296,16 +295,72 @@
         <div id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">从Linux内核看TCP超时重传机制</h1>
+            <h1 style="display: none">Linux网络协议栈TCP优化选项</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="从Linux内核看TCP超时重传机制"><a href="#从Linux内核看TCP超时重传机制" class="headerlink" title="从Linux内核看TCP超时重传机制"></a>从Linux内核看TCP超时重传机制</h1><h2 id="1-TCP超时重传原理"><a href="#1-TCP超时重传原理" class="headerlink" title="1. TCP超时重传原理"></a>1. TCP超时重传原理</h2><p>RTO</p>
-<p>RTT</p>
-<p>快重传</p>
-<h2 id="2-Linux内核网络协议栈重传机制实现"><a href="#2-Linux内核网络协议栈重传机制实现" class="headerlink" title="2. Linux内核网络协议栈重传机制实现"></a>2. Linux内核网络协议栈重传机制实现</h2><h2 id="3-如何观测重传关键参数"><a href="#3-如何观测重传关键参数" class="headerlink" title="3. 如何观测重传关键参数"></a>3. 如何观测重传关键参数</h2><h3 id="3-1-传统工具"><a href="#3-1-传统工具" class="headerlink" title="3.1 传统工具"></a>3.1 传统工具</h3><h3 id="3-2-现有eBPF技术工具"><a href="#3-2-现有eBPF技术工具" class="headerlink" title="3.2 现有eBPF技术工具"></a>3.2 现有eBPF技术工具</h3><h3 id="3-3-开发采用eBPF技术的小工具"><a href="#3-3-开发采用eBPF技术的小工具" class="headerlink" title="3.3 开发采用eBPF技术的小工具"></a>3.3 开发采用eBPF技术的小工具</h3><h2 id="4-总结"><a href="#4-总结" class="headerlink" title="4. 总结"></a>4. 总结</h2><h2 id="5-参考资料"><a href="#5-参考资料" class="headerlink" title="5. 参考资料"></a>5. 参考资料</h2><ol>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/101702312">详解 TCP 超时与重传机制</a></li>
+                <h1 id="Linux网络协议栈TCP优化选项"><a href="#Linux网络协议栈TCP优化选项" class="headerlink" title="Linux网络协议栈TCP优化选项"></a>Linux网络协议栈TCP优化选项</h1><p>TODO:</p>
+<p>网络协议栈优化第一步：<strong>调参</strong></p>
+<p>目的：列出Linux协议栈中关于TCP优化选项含义</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看</span><br><span class="hljs-built_in">cat</span> /proc/sys/net/ipv4/tcp*<br><span class="hljs-comment"># 设置</span><br>sysctl net.ipv4.tcp_*<br></code></pre></td></tr></table></figure>
+
+<h2 id="TCP选项"><a href="#TCP选项" class="headerlink" title="TCP选项"></a>TCP选项</h2><table>
+<thead>
+<tr>
+<th>序号</th>
+<th>参数</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://www.51cto.com/article/700418.html">Linux上TCP的几个内核参数调优</a></li>
 </ol>
 
                 
@@ -321,9 +376,7 @@
       
         <a href="/tags/%E7%BD%91%E7%BB%9C/">#网络</a>
       
-        <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
-      
-        <a href="/tags/Linux%E5%86%85%E6%A0%B8/">#Linux内核</a>
+        <a href="/tags/%E6%95%B4%E5%90%88/">#整合</a>
       
     </div>
   
@@ -335,8 +388,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>从Linux内核看TCP超时重传机制</div>
-      <div>http://ziyangfu.github.io/2023/05/16/从Linux内核看TCP超时重传机制/</div>
+      <div>Linux网络协议栈TCP优化选项</div>
+      <div>http://ziyangfu.github.io/2023/05/18/Linux网络协议栈TCP优化选项/</div>
     </div>
     <div class="license-meta">
       
@@ -348,7 +401,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2023年5月16日</div>
+          <div>2023年5月18日</div>
         </div>
       
       
@@ -384,8 +437,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2023/05/15/%E6%95%B0%E6%8D%AE%E5%88%86%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%BC%80%E6%BA%90%E5%AE%9E%E7%8E%B0FastDDS/" title="数据分发服务开源实现FastDDS">
-                        <span class="hidden-mobile">数据分发服务开源实现FastDDS</span>
+                      <a href="/2023/05/16/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BTCP%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6/" title="从Linux内核看TCP重传机制">
+                        <span class="hidden-mobile">从Linux内核看TCP重传机制</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

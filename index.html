@@ -241,15 +241,57 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
-        <a href="/2023/05/16/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BTCP%E8%B6%85%E6%97%B6%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6/" target="_self">
-          从Linux内核看TCP超时重传机制
+        <a href="/2023/05/18/Linux%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E6%A0%88TCP%E4%BC%98%E5%8C%96%E9%80%89%E9%A1%B9/" target="_self">
+          Linux网络协议栈TCP优化选项
         </a>
       </h1>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/05/16/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BTCP%E8%B6%85%E6%97%B6%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2023/05/18/Linux%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E6%A0%88TCP%E4%BC%98%E5%8C%96%E9%80%89%E9%A1%B9/" target="_self">
         <div>
-          从Linux内核看TCP超时重传机制1. TCP超时重传原理RTO RTT 快重传 2. Linux内核网络协议栈重传机制实现3. 如何观测重传关键参数3.1 传统工具3.2 现有eBPF技术工具3.3 开发采用eBPF技术的小工具4. 总结5. 参考资料 详解 TCP 超时与重传机制
+          Linux网络协议栈TCP优化选项TODO: 网络协议栈优化第一步：调参 目的：列出Linux协议栈中关于TCP优化选项含义 1234# 查看cat /proc/sys/net/ipv4/tcp*# 设置sysctl net.ipv4.tcp_*  TCP选项   序号 参数 含义                                                 参考资料 Linux
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2023-05-18 10:22" pubdate>
+              2023-05-18
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E7%BD%91%E7%BB%9C/">#网络</a>
+            
+              <a href="/tags/%E6%95%B4%E5%90%88/">#整合</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2023/05/16/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BTCP%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6/" target="_self">
+          从Linux内核看TCP重传机制
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2023/05/16/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BTCP%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6/" target="_self">
+        <div>
+          从Linux内核看TCP重传机制1. TCP重传机制原理简述关于TCP超时重传原理的阐述，网络上有大量的优质文章，读者可以搜索查阅。为了文章的完整性，本文仅做概述。 TCP重传机制具有以下几种方法：  基于计时器的重传（超时重传）  快重传（Fast Retransmit）  选择重传  选择性确认方法（Selective Acknowledgment，SACK） Duplicate SACK
         </div>
       </a>
 
@@ -618,50 +660,6 @@
               <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
             
               <a href="/tags/%E8%BD%A6%E8%BD%BD%E4%BB%A5%E5%A4%AA%E7%BD%91/">#车载以太网</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2023/04/14/ARM64%E6%9E%B6%E6%9E%84Linux%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90_%E4%B8%8A/" target="_self">
-          ARM64架构Linux内核启动过程分析_上
-        </a>
-      </h1>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/04/14/ARM64%E6%9E%B6%E6%9E%84Linux%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90_%E4%B8%8A/" target="_self">
-        <div>
-          ARM64架构Linux内核启动过程分析（上） Linux内核版本：5.10.90 硬件：NXP S32G-VNP-RDB2 (4 * A53，ARM64)    1. ROM code从外部设备（串口、网络、NAND flash、USB磁盘设备或者其他磁盘设备）加载 Linux bootloader。 2. BootLoader 初始化系统中的RAM并将RAM的信息告知kernel 准备好dev
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-04-14 15:51" pubdate>
-              2023-04-14
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
-            
-              <a href="/tags/Linux%E5%86%85%E6%A0%B8/">#Linux内核</a>
-            
-              <a href="/tags/ARM64/">#ARM64</a>
             
           </div>
         
