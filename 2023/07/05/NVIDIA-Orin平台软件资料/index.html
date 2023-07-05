@@ -16,23 +16,29 @@
   <meta name="author" content="FZY">
   <meta name="keywords" content="">
   
-    <meta name="description" content="GCC预处理C&#x2F;C++的默认搜索路径 预处理C时的搜索目录： 1gcc -x c -v -E -  输出如下： 1234567891011121314151617181920Using built-in specs.COLLECT_GCC&#x3D;gccOFFLOAD_TARGET_NAMES&#x3D;nvptx-none:hsaOFFLOAD_TARGET_DEFAULT&#x3D;1Target: x86_6">
+    <meta name="description" content="NVIDIA Orin平台软件资料汇总1. NVIDIA自动驾驶平台（NVIDIA Orin）适用于自主机器的 NVIDIA DRIVE SoftwareDRIVE Hyperion 自动驾驶汽车开发平台 | NVIDIA 开发者NVIDIA DRIVE SDKDriveWorks SDK【NVIDIA自动驾驶平台中间件】DriveWorks6.0.6【DriveWorks SDK 参考】NVID">
 <meta property="og:type" content="article">
-<meta property="og:title" content="GCC预处理C_C++的默认搜索路径">
-<meta property="og:url" content="http://ziyangfu.github.io/2023/05/25/GCC%E9%A2%84%E5%A4%84%E7%90%86C-C-%E7%9A%84%E9%BB%98%E8%AE%A4%E6%90%9C%E7%B4%A2%E8%B7%AF%E5%BE%84/index.html">
+<meta property="og:title" content="NVIDIA_Orin平台软件资料">
+<meta property="og:url" content="http://ziyangfu.github.io/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/index.html">
 <meta property="og:site_name" content="聚焦Linux内核与C++中间件">
-<meta property="og:description" content="GCC预处理C&#x2F;C++的默认搜索路径 预处理C时的搜索目录： 1gcc -x c -v -E -  输出如下： 1234567891011121314151617181920Using built-in specs.COLLECT_GCC&#x3D;gccOFFLOAD_TARGET_NAMES&#x3D;nvptx-none:hsaOFFLOAD_TARGET_DEFAULT&#x3D;1Target: x86_6">
+<meta property="og:description" content="NVIDIA Orin平台软件资料汇总1. NVIDIA自动驾驶平台（NVIDIA Orin）适用于自主机器的 NVIDIA DRIVE SoftwareDRIVE Hyperion 自动驾驶汽车开发平台 | NVIDIA 开发者NVIDIA DRIVE SDKDriveWorks SDK【NVIDIA自动驾驶平台中间件】DriveWorks6.0.6【DriveWorks SDK 参考】NVID">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2023-05-25T07:08:14.000Z">
-<meta property="article:modified_time" content="2023-05-25T07:17:20.905Z">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/1.jpeg">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/2.jpeg">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/3.jpeg">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/4.jpeg">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/5.jpeg">
+<meta property="article:published_time" content="2023-07-05T06:18:57.000Z">
+<meta property="article:modified_time" content="2023-07-05T06:32:02.720Z">
 <meta property="article:author" content="FZY">
 <meta property="article:tag" content="原创">
-<meta property="article:tag" content="编译与链接">
+<meta property="article:tag" content="NVIDIA Orin">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://ziyangfu.github.io/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/1.jpeg">
   
   
   
-  <title>GCC预处理C_C++的默认搜索路径 - 聚焦Linux内核与C++中间件</title>
+  <title>NVIDIA_Orin平台软件资料 - 聚焦Linux内核与C++中间件</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -215,7 +221,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="GCC预处理C_C++的默认搜索路径"></span>
+            <span id="subtitle" data-typed-text="NVIDIA_Orin平台软件资料"></span>
           
         </div>
 
@@ -226,8 +232,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2023-05-25 15:08" pubdate>
-          2023年5月25日 下午
+        <time datetime="2023-07-05 14:18" pubdate>
+          2023年7月5日 下午
         </time>
       </span>
     
@@ -238,7 +244,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          4.4k 字
+          2.5k 字
         
       </span>
     
@@ -249,7 +255,7 @@
         
         
         
-          37 分钟
+          22 分钟
         
       </span>
     
@@ -295,28 +301,57 @@
         <div id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">GCC预处理C_C++的默认搜索路径</h1>
+            <h1 style="display: none">NVIDIA_Orin平台软件资料</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="GCC预处理C-x2F-C-的默认搜索路径"><a href="#GCC预处理C-x2F-C-的默认搜索路径" class="headerlink" title="GCC预处理C&#x2F;C++的默认搜索路径"></a>GCC预处理C&#x2F;C++的默认搜索路径</h1><p> 预处理C时的搜索目录：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc -x c -v -E -<br></code></pre></td></tr></table></figure>
+                <h1 id="NVIDIA-Orin平台软件资料汇总"><a href="#NVIDIA-Orin平台软件资料汇总" class="headerlink" title="NVIDIA Orin平台软件资料汇总"></a>NVIDIA Orin平台软件资料汇总</h1><h2 id="1-NVIDIA自动驾驶平台（NVIDIA-Orin）"><a href="#1-NVIDIA自动驾驶平台（NVIDIA-Orin）" class="headerlink" title="1. NVIDIA自动驾驶平台（NVIDIA Orin）"></a>1. NVIDIA自动驾驶平台（NVIDIA Orin）</h2><p><a target="_blank" rel="noopener" href="https://www.nvidia.cn/self-driving-cars/drive-platform/software/">适用于自主机器的 NVIDIA DRIVE Software</a><br><a target="_blank" rel="noopener" href="https://developer.nvidia.cn/zh-cn/drive/drive-hyperion">DRIVE Hyperion 自动驾驶汽车开发平台 | NVIDIA 开发者</a><br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/drive/drive-sdk#driveworks">NVIDIA DRIVE SDK</a><br><a target="_blank" rel="noopener" href="https://developer.nvidia.cn/zh-cn/drive/driveworks">DriveWorks SDK</a>【NVIDIA自动驾驶平台中间件】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/docs/drive/drive-os/6.0.6/public/driveworks-nvsdk/index.html">DriveWorks6.0.6</a>【DriveWorks SDK 参考】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.cn/drive/documentation">NVIDIA DRIVE Documentation</a>【自动驾驶文档，部分公开】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/docs/drive/drive-os/6.0.6/public/drive-os-linux-sdk/common/topics/intro_sdk/GettingStarted1.html">Overview | NVIDIA Docs</a>【<a target="_blank" rel="noopener" href="https://developer.nvidia.com/docs/drive/drive-os/6.0.6/public/drive-os-linux-sdk/index.html">NVIDIA DRIVE OS Linux SDK 开发人员指南</a>，BSP】<br><img src="/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/1.jpeg" srcset="/img/loading.gif" lazyload style="zoom:50%;"><br>DRIVE平台软件堆栈</p>
+<h2 id="2-NVIDIA边缘计算-NVIDIA-Jetson-Orin"><a href="#2-NVIDIA边缘计算-NVIDIA-Jetson-Orin" class="headerlink" title="2. NVIDIA边缘计算(NVIDIA Jetson Orin)"></a>2. NVIDIA边缘计算(NVIDIA Jetson Orin)</h2><img src="/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/2.jpeg" srcset="/img/loading.gif" lazyload class title="image.png">
+<p>工作流</p>
+<img src="/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/3.jpeg" srcset="/img/loading.gif" lazyload class title="image.png">
+<p>软件堆栈一览</p>
+<h3 id="jetson-AGX-Orin平台SDK资料"><a href="#jetson-AGX-Orin平台SDK资料" class="headerlink" title="jetson AGX Orin平台SDK资料"></a>jetson AGX Orin平台SDK资料</h3><p><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/learn/jetson-agx-orin-devkit-user-guide/index.html">jetson AGX Orin快速入门手册</a><br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/learn/getting-started-jetson">快速入门</a><br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/develop/software">Jetson Software</a>【jetson软件堆栈资料汇总】<br><a target="_blank" rel="noopener" href="https://docs.nvidia.com/jetson/archives/jetpack-archived/jetpack-511/introduction/index.html">Introduction to JetPack :: NVIDIA JetPack Documentation</a>【JetPack介绍文档】【推荐】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/jetpack">JetPack SDK</a>【BSP + 低级别工具（CUDA、TensorRT、cuDNN、deepStream及VPI等）】</p>
+<p><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/jetson-linux-r3531">Jetson Linux 35.3.1</a>【BSP资源下载，<a target="_blank" rel="noopener" href="https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/release/jetson_multimedia_api_r35.3.1_aarch64.tbz2/">Jetson Linux API Reference</a>多媒体API】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/jetson-cloud-native">Cloud-Native on Jetson</a>【云原生】<br><a target="_blank" rel="noopener" href="https://docs.nvidia.com/jetson/archives/r35.3.1/DeveloperGuide/text/SO/JetsonOrinSeries.html">Jetson Orin Series — Jetson Linux Developer Guide documentation</a>【BSP开发手册】【推荐】<br><a target="_blank" rel="noopener" href="https://docs.nvidia.com/sdk-manager/index.html">NVIDIA SDK Manager Documentation</a>【SDK Manager操作手册，刷新工具】</p>
+<h3 id="实用开发工具"><a href="#实用开发工具" class="headerlink" title="实用开发工具"></a>实用开发工具</h3><p><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/develop/tools">Jetson Developer Tools</a>【开发工具集合】<br><a target="_blank" rel="noopener" href="https://docs.nvidia.com/cuda/archive/11.4.4/">CUDA Toolkit Documentation</a>【CUDA使用手册 v11.4.4】<br><a target="_blank" rel="noopener" href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">CUDA-GDB</a>【CUDA应用程序调试工具】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/tensorrt">NVIDIA TensorRT</a>【深度学习推理】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/cudnn">CUDA Deep Neural Network</a>【CUDA深度神经网络库】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/vpi">Vision Programming Interface (VPI)</a>【视觉编程接口】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/deepstream-sdk">DeepStream SDK</a>【多传感器处理、音视频理解】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/riva">Riva Speech AI SDK - Get Started</a>【语音AI SDK， GPU加速】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/isaac-ros">Isaac ROS</a>【兼容ROS的NVIDIA 硬件加速包】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/isaac-sdk">Isaac Software Development Kit (SDK)</a><br><a target="_blank" rel="noopener" href="https://nvidia-ai-iot.github.io/jetson-min-disk/analysis.html">Analyze Disk Usage - Guide to Minimizing Jetson Disk Usage</a>【最小化 Jetson 磁盘使用指南， 系统裁剪】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/nsight-systems">NVIDIA Nsight System</a>【系统级性能分析工具，CPU+GPU】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/nvidia-triton-inference-server">Triton Inference Server</a>【开源AI推理】<br><a target="_blank" rel="noopener" href="https://developer.nvidia.com/tao-toolkit">NVIDIA TAO Toolkit</a>【AI模型创建工具，在高性能计算中使用】<br><a target="_blank" rel="noopener" href="https://www.nvidia.com/en-us/autonomous-machines/intelligent-video-analytics-platform/">Metropolis | NVIDIA</a>【视频理解框架，AI整体解决方案】</p>
+<h3 id="社区及支持"><a href="#社区及支持" class="headerlink" title="社区及支持"></a>社区及支持</h3><p><a target="_blank" rel="noopener" href="https://forums.developer.nvidia.com/c/agx-autonomous-machines/jetson-embedded-systems/jetson-agx-orin/486">Jetson AGX Orin</a>【NVIDIA AGX Orin分论坛】<br><a target="_blank" rel="noopener" href="https://elinux.org/Jetson_Zoo">Jetson Zoo - eLinux.org</a>【JetPack ARM64 开源包及框架说明】<br><a target="_blank" rel="noopener" href="https://elinux.org/Jetson_AGX_Orin">Jetson AGX Orin - eLinux.org</a><br><a target="_blank" rel="noopener" href="https://elinux.org/Jetson">Jetson - eLinux.org</a>【Jetson系列资料，对找相机驱动有帮助】<br><a target="_blank" rel="noopener" href="https://elinux.org/Jetson_AGX_Xavier">Jetson AGX Xavier - eLinux.org</a>【上一代Xavier说明】</p>
+<h3 id="课程"><a href="#课程" class="headerlink" title="课程"></a>课程</h3><p><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/learn/jetson-ai-certification-programs#course_outline">Jetson AI Courses and Certifications</a>【AI技能入门及提升课程】</p>
+<h3 id="项目"><a href="#项目" class="headerlink" title="项目"></a>项目</h3><p><a target="_blank" rel="noopener" href="https://developer.nvidia.com/embedded/community/jetson-projects">Jetson Community Projects</a>【NVIDIA项目汇总】<br><a target="_blank" rel="noopener" href="https://www.e-consystems.com/blog/camera/applications/popular-embedded-vision-use-cases-of-nvidia-jetson-agx-orin/">Popular embedded vision use cases of NVIDIA® Jetson AGX Orin™ - e-con Systems</a>【AGX Orin平台嵌入式视觉项目】<br><a target="_blank" rel="noopener" href="https://github.com/dusty-nv/jetson-inference">GitHub - dusty-nv&#x2F;jetson-inference: Hello AI World guide to deploying deep-learning inference networks and deep vision primitives with TensorRT and NVIDIA Jetson.</a>【入门项目， 小项目汇总】<br><a target="_blank" rel="noopener" href="https://github.com/NVIDIA-AI-IOT">NVIDIA-AI-IOT</a>【NVIDIA AIOT github 仓库】</p>
+<h3 id="实用软件安装文档"><a href="#实用软件安装文档" class="headerlink" title="实用软件安装文档"></a>实用软件安装文档</h3><p><a target="_blank" rel="noopener" href="https://www.e-consystems.com/blog/camera/products/all-you-need-to-know-about-how-to-install-ros2-on-jetson-orin-using-nilecam81/">All you need to know about how to install ROS2 on Jetson Orin - using NileCAM81 - e-con Systems</a>【在Jetson AGX Orin平台安装 ROS2】<br>Apollo在Xavier的安装</p>
+<h2 id="3-具体工具的使用"><a href="#3-具体工具的使用" class="headerlink" title="3. 具体工具的使用"></a>3. 具体工具的使用</h2><h3 id="视觉编程接口VPI"><a href="#视觉编程接口VPI" class="headerlink" title="视觉编程接口VPI"></a>视觉编程接口VPI</h3><blockquote>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://docs.nvidia.com/vpi/index.html">VPI接口手册</a>（C++ &amp;&amp; Python）</li>
+<li><a target="_blank" rel="noopener" href="https://developer.nvidia.com/computer-vision">NVIDIA探索计算机视觉解决方案</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.nvidia.com/vpi/python/index.html">Python VPI API</a></li>
+</ol>
+</blockquote>
+<p>图像处理，集成OpenCV</p>
+<h3 id="DeepStream"><a href="#DeepStream" class="headerlink" title="DeepStream"></a>DeepStream</h3><blockquote>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_Overview.html">Welcome to the DeepStream Documentation — DeepStream 6.2 Release documentation</a>【说明文档】</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/NVIDIA-AI-IOT/deepstream_python_apps">GitHub - NVIDIA-AI-IOT&#x2F;deepstream_python_apps: DeepStream SDK Python bindings and sample applications</a>【DeepStream Python绑定与示例】</li>
+<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=zotnq7UNOPM">Go from Zero to Deployment in Minutes with Graph Composer</a>) 【低代码工具，可视化编程】</li>
+<li><a target="_blank" rel="noopener" href="https://forums.developer.nvidia.com/c/accelerated-computing/intelligent-video-analytics/deepstream-sdk/15">DeepStream官方论坛NVIDIA</a></li>
+</ol>
+</blockquote>
+<img src="/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/4.jpeg" srcset="/img/loading.gif" lazyload class title="image.png">
+<p>视频理解方案，从gstreamer中获取图像。</p>
+<h3 id="TensorRT"><a href="#TensorRT" class="headerlink" title="TensorRT"></a>TensorRT</h3><blockquote>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://docs.nvidia.com/deeplearning/tensorrt/index.html">NVIDIA Deep Learning TensorRT Documentation</a>【说明文档】</li>
+</ol>
+</blockquote>
+<p>NVIDIA TensorRT 是一个 C++ 库，可加速 NVIDIA GPU 上的高性能推理。</p>
+<h3 id="cuDNN"><a href="#cuDNN" class="headerlink" title="cuDNN"></a>cuDNN</h3><blockquote>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://docs.nvidia.com/deeplearning/cudnn/developer-guide/index.html">Developer Guide :: NVIDIA cuDNN Documentation</a></li>
+</ol>
+</blockquote>
+<h3 id="CUDA"><a href="#CUDA" class="headerlink" title="CUDA"></a>CUDA</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html">CUDA C++ Best Practices</a> 【CUDA C++最佳实践】<br><a target="_blank" rel="noopener" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html">CUDA C++编程指导手册</a>【CUDA C++编程】<br><a target="_blank" rel="noopener" href="https://face2ai.com/categories/CUDA/">谭升的博客</a><br><a target="_blank" rel="noopener" href="https://www.cnblogs.com/wildkid1024/p/14871619.html">[CUDA]CUDA编程资源汇总 - wildkid1024 - 博客园</a></p>
+</blockquote>
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><img src="/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/5.jpeg" srcset="/img/loading.gif" lazyload class title="image.png">
 
-<p>输出如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs bash">Using built-in specs.<br>COLLECT_GCC=gcc<br>OFFLOAD_TARGET_NAMES=nvptx-none:hsa<br>OFFLOAD_TARGET_DEFAULT=1<br>Target: x86_64-linux-gnu<br>Configured with: ../src/configure -v --with-pkgversion=<span class="hljs-string">&#x27;Ubuntu 9.4.0-1ubuntu1~20.04.1&#x27;</span> --with-bugurl=file:///usr/share/doc/gcc-9/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++,gm2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-9 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=<span class="hljs-built_in">yes</span> --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-9-Av3uEd/gcc-9-9.4.0/debian/tmp-nvptx/usr,hsa --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu<br>Thread model: posix<br>gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.1) <br>COLLECT_GCC_OPTIONS=<span class="hljs-string">&#x27;-v&#x27;</span> <span class="hljs-string">&#x27;-E&#x27;</span> <span class="hljs-string">&#x27;-mtune=generic&#x27;</span> <span class="hljs-string">&#x27;-march=x86-64&#x27;</span><br> /usr/lib/gcc/x86_64-linux-gnu/9/cc1 -E -quiet -v -imultiarch x86_64-linux-gnu - -mtune=generic -march=x86-64 -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection<br>ignoring nonexistent directory <span class="hljs-string">&quot;/usr/local/include/x86_64-linux-gnu&quot;</span><br>ignoring nonexistent directory <span class="hljs-string">&quot;/usr/lib/gcc/x86_64-linux-gnu/9/include-fixed&quot;</span><br>ignoring nonexistent directory <span class="hljs-string">&quot;/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/include&quot;</span><br><span class="hljs-comment">#include &quot;...&quot; search starts here:</span><br><span class="hljs-comment">#include &lt;...&gt; search starts here:</span><br> /usr/lib/gcc/x86_64-linux-gnu/9/include<br> /usr/local/include<br> /usr/include/x86_64-linux-gnu<br> /usr/include<br>End of search list.<br></code></pre></td></tr></table></figure>
-
-<p> 预处理C++时的搜索目录：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc -x c++ -v -E -<br></code></pre></td></tr></table></figure>
-
-<p>输出如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs bash">Using built-in specs.<br>COLLECT_GCC=gcc<br>OFFLOAD_TARGET_NAMES=nvptx-none:hsa<br>OFFLOAD_TARGET_DEFAULT=1<br>Target: x86_64-linux-gnu<br>Configured with: ../src/configure -v --with-pkgversion=<span class="hljs-string">&#x27;Ubuntu 9.4.0-1ubuntu1~20.04.1&#x27;</span> --with-bugurl=file:///usr/share/doc/gcc-9/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++,gm2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-9 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=<span class="hljs-built_in">yes</span> --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-9-Av3uEd/gcc-9-9.4.0/debian/tmp-nvptx/usr,hsa --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu<br>Thread model: posix<br>gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.1) <br>COLLECT_GCC_OPTIONS=<span class="hljs-string">&#x27;-v&#x27;</span> <span class="hljs-string">&#x27;-E&#x27;</span> <span class="hljs-string">&#x27;-mtune=generic&#x27;</span> <span class="hljs-string">&#x27;-march=x86-64&#x27;</span><br> /usr/lib/gcc/x86_64-linux-gnu/9/cc1plus -E -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE - -mtune=generic -march=x86-64 -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection<br>ignoring duplicate directory <span class="hljs-string">&quot;/usr/include/x86_64-linux-gnu/c++/9&quot;</span><br>ignoring nonexistent directory <span class="hljs-string">&quot;/usr/local/include/x86_64-linux-gnu&quot;</span><br>ignoring nonexistent directory <span class="hljs-string">&quot;/usr/lib/gcc/x86_64-linux-gnu/9/include-fixed&quot;</span><br>ignoring nonexistent directory <span class="hljs-string">&quot;/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/include&quot;</span><br><span class="hljs-comment">#include &quot;...&quot; search starts here:</span><br><span class="hljs-comment">#include &lt;...&gt; search starts here:</span><br> /usr/include/c++/9<br> /usr/include/x86_64-linux-gnu/c++/9<br> /usr/include/c++/9/backward<br> /usr/lib/gcc/x86_64-linux-gnu/9/include<br> /usr/local/include<br> /usr/include/x86_64-linux-gnu<br> /usr/include<br>End of search list.<br></code></pre></td></tr></table></figure>
-
-
-
-<p>参考资料</p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_44327262/article/details/105860213">详解Linux下环境变量C_INCLUDE_PATH、CPLUS_INCLUDE_PATH、CPATH以及常见错误</a></p>
-<p><a target="_blank" rel="noopener" href="https://blog.sciencenet.cn/home.php?mod=space&uid=323317&do=blog&id=1262940">Linux INCLUDE与LIB环境变量</a></p>
 
                 
               </div>
@@ -331,7 +366,7 @@
       
         <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
       
-        <a href="/tags/%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/">#编译与链接</a>
+        <a href="/tags/NVIDIA-Orin/">#NVIDIA Orin</a>
       
     </div>
   
@@ -343,8 +378,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>GCC预处理C_C++的默认搜索路径</div>
-      <div>http://ziyangfu.github.io/2023/05/25/GCC预处理C-C-的默认搜索路径/</div>
+      <div>NVIDIA_Orin平台软件资料</div>
+      <div>http://ziyangfu.github.io/2023/07/05/NVIDIA-Orin平台软件资料/</div>
     </div>
     <div class="license-meta">
       
@@ -356,7 +391,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2023年5月25日</div>
+          <div>2023年7月5日</div>
         </div>
       
       
@@ -392,8 +427,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2023/05/18/Linux%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E6%A0%88TCP%E4%BC%98%E5%8C%96%E9%80%89%E9%A1%B9/" title="Linux网络协议栈TCP优化选项">
-                        <span class="hidden-mobile">Linux网络协议栈TCP优化选项</span>
+                      <a href="/2023/05/25/GCC%E9%A2%84%E5%A4%84%E7%90%86C_CPP%E7%9A%84%E9%BB%98%E8%AE%A4%E6%90%9C%E7%B4%A2%E8%B7%AF%E5%BE%84/" title="GCC预处理C_C++的默认搜索路径">
+                        <span class="hidden-mobile">GCC预处理C_C++的默认搜索路径</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
