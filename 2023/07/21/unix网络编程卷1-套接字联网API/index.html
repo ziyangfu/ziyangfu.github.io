@@ -1,0 +1,919 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="FZY">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="UNIX网络编程卷1：套接字联网API2. 传输层：TCP、UDP、SCTPTCP状态转换图，全书最重要的图之一   UNIX网络编程第二章   3. 套接字编程简介以下是UNIX网络编程卷一上的图，查看Linux 这几个地址的定义，有些许差别，Linux的定义如下： 12345678910111213141516171819202122232425262728293031323334353637">
+<meta property="og:type" content="article">
+<meta property="og:title" content="unix网络编程卷1_套接字联网API">
+<meta property="og:url" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/index.html">
+<meta property="og:site_name" content="聚焦Linux内核与C++中间件">
+<meta property="og:description" content="UNIX网络编程卷1：套接字联网API2. 传输层：TCP、UDP、SCTPTCP状态转换图，全书最重要的图之一   UNIX网络编程第二章   3. 套接字编程简介以下是UNIX网络编程卷一上的图，查看Linux 这几个地址的定义，有些许差别，Linux的定义如下： 12345678910111213141516171819202122232425262728293031323334353637">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230707161910922.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230707162837287.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230710135021051.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230711105902889.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230711105700774.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230711110426805.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712101328832.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712101520449.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712101818511.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712102345606.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712103326030.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712105346134.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230713110933870.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230713114245758.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714094837417.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714100425698.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714100811868.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714101711314.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714102858926.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714103525135.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714104353262.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714104908196.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714105120073.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230717114657535.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230718101508940.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230717130305636.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230718093249058.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230718094548141.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230719101442074.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230719101234474.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720092320779.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720094101668.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720094607440.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720100557840.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720105313825.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720105446586.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720112341494.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720113140264.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720113922109.png">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230721165536460.png">
+<meta property="article:published_time" content="2023-07-21T08:54:31.000Z">
+<meta property="article:modified_time" content="2023-07-21T08:57:06.588Z">
+<meta property="article:author" content="FZY">
+<meta property="article:tag" content="原创">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://ziyangfu.github.io/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230707161910922.png">
+  
+  
+  
+  <title>unix网络编程卷1_套接字联网API - 聚焦Linux内核与C++中间件</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ziyangfu.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","app_key":"PXw2Tf5wmgP8pwaWaayNPuiU","server_url":"https://wzw3bc90.lc-cn-e1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>好好学习， 天天向上</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="unix网络编程卷1_套接字联网API"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-07-21 16:54" pubdate>
+          2023年7月21日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          34 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">unix网络编程卷1_套接字联网API</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="UNIX网络编程卷1：套接字联网API"><a href="#UNIX网络编程卷1：套接字联网API" class="headerlink" title="UNIX网络编程卷1：套接字联网API"></a>UNIX网络编程卷1：套接字联网API</h1><h2 id="2-传输层：TCP、UDP、SCTP"><a href="#2-传输层：TCP、UDP、SCTP" class="headerlink" title="2. 传输层：TCP、UDP、SCTP"></a>2. 传输层：TCP、UDP、SCTP</h2><p>TCP状态转换图，<strong>全书最重要的图之一</strong></p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230707161910922.png" srcset="/img/loading.gif" lazyload class title="image-20230707161910922">
+
+<p><em>UNIX网络编程第二章</em></p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230707162837287.png" srcset="/img/loading.gif" lazyload class title="image-20230707162837287">
+
+<h2 id="3-套接字编程简介"><a href="#3-套接字编程简介" class="headerlink" title="3. 套接字编程简介"></a>3. 套接字编程简介</h2><p>以下是UNIX网络编程卷一上的图，查看Linux 这几个地址的定义，有些许差别，Linux的定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// /usr/include/netinet/in.h</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span></span><br><span class="hljs-class">  &#123;</span><br>    __SOCKADDR_COMMON (sin_);<br>    <span class="hljs-type">in_port_t</span> sin_port;			<span class="hljs-comment">/* Port number.  */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">in_addr</span> <span class="hljs-title">sin_addr</span>;</span>		<span class="hljs-comment">/* Internet address.  */</span><br><br>    <span class="hljs-comment">/* Pad to size of `struct sockaddr&#x27;.  */</span><br>    <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> sin_zero[<span class="hljs-keyword">sizeof</span> (<span class="hljs-keyword">struct</span> sockaddr)<br>			   - __SOCKADDR_COMMON_SIZE<br>			   - <span class="hljs-keyword">sizeof</span> (<span class="hljs-type">in_port_t</span>)<br>			   - <span class="hljs-keyword">sizeof</span> (<span class="hljs-keyword">struct</span> in_addr)];<br>  &#125;;<br><br><span class="hljs-comment">/* Structure describing an Internet socket address.  */</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span></span><br><span class="hljs-class">  &#123;</span><br>    __SOCKADDR_COMMON (sin_);<br>    <span class="hljs-type">in_port_t</span> sin_port;			<span class="hljs-comment">/* Port number.  */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">in_addr</span> <span class="hljs-title">sin_addr</span>;</span>		<span class="hljs-comment">/* Internet address.  */</span><br><br>    <span class="hljs-comment">/* Pad to size of `struct sockaddr&#x27;.  */</span><br>    <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> sin_zero[<span class="hljs-keyword">sizeof</span> (<span class="hljs-keyword">struct</span> sockaddr)<br>			   - __SOCKADDR_COMMON_SIZE<br>			   - <span class="hljs-keyword">sizeof</span> (<span class="hljs-type">in_port_t</span>)<br>			   - <span class="hljs-keyword">sizeof</span> (<span class="hljs-keyword">struct</span> in_addr)];<br>  &#125;;<br><br><span class="hljs-comment">/* Ditto, for IPv6.  */</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in6</span></span><br><span class="hljs-class">  &#123;</span><br>    __SOCKADDR_COMMON (sin6_);<br>    <span class="hljs-type">in_port_t</span> sin6_port;	<span class="hljs-comment">/* Transport layer port # */</span><br>    <span class="hljs-type">uint32_t</span> sin6_flowinfo;	<span class="hljs-comment">/* IPv6 flow information */</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">in6_addr</span> <span class="hljs-title">sin6_addr</span>;</span>	<span class="hljs-comment">/* IPv6 address */</span><br>    <span class="hljs-type">uint32_t</span> sin6_scope_id;	<span class="hljs-comment">/* IPv6 scope-id */</span><br>  &#125;;<br><br></code></pre></td></tr></table></figure>
+
+
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230710135021051.png" srcset="/img/loading.gif" lazyload class title="image-20230710135021051">
+
+<h2 id="4-基本TCP套接字编程"><a href="#4-基本TCP套接字编程" class="headerlink" title="4. 基本TCP套接字编程"></a>4. 基本TCP套接字编程</h2><p>内核为每一个监听套接字维护两个队列：</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230711105902889.png" srcset="/img/loading.gif" lazyload class title="image-20230711105902889">
+
+
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230711105700774.png" srcset="/img/loading.gif" lazyload class title="image-20230711105700774">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230711110426805.png" srcset="/img/loading.gif" lazyload class title="image-20230711110426805">
+
+<blockquote>
+<p>相关知识： 半连接攻击</p>
+</blockquote>
+<h2 id="6-IO复用：select和poll函数"><a href="#6-IO复用：select和poll函数" class="headerlink" title="6. IO复用：select和poll函数"></a>6. IO复用：select和poll函数</h2><p><strong>5种IO模型</strong>（这部分小林的图解系列图更好）</p>
+<p>一个输入操作包括2个不同的阶段：</p>
+<ul>
+<li>等待数据准备好</li>
+<li>从内核向进程复制数据</li>
+</ul>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712101328832.png" srcset="/img/loading.gif" lazyload class title="image-20230712101328832">
+
+<p>一个非阻塞描述符循环调用recvfrom时，我们称之为轮询。该操作大量消耗CPU时间。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712101520449.png" srcset="/img/loading.gif" lazyload class title="image-20230712101520449">
+
+<p>IO多路复用同样是阻塞式的，不过它阻塞在IO复用系统调用上，如select、poll以及epoll，而不是阻塞在真正的IO系统调用上。注意，数据从内核复制到用户空间的那段时间，应用也是阻塞的。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712101818511.png" srcset="/img/loading.gif" lazyload class title="image-20230712101818511">
+
+<p>信号驱动式IO模型暂未发现可用场景，就不放图了。</p>
+<p>以上所有的IO模型，均为同步IO。</p>
+<p>POSIX异步IO框架aio系列已经过时了，在Linux平台，可以使用从Linux内核5.1开始的io_uring异步框架。</p>
+<p>注意，IO多路复用是在收到数据时触发读事件，通知上层应用，此时需要将数据复制到用户空间。而异步IO是收到数据，并且<strong>将数据从内核复制到了用户空间后</strong>，再通知应用处理数据。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712102345606.png" srcset="/img/loading.gif" lazyload class title="image-20230712102345606">
+
+<p>五种IO模型的比较：</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712103326030.png" srcset="/img/loading.gif" lazyload class title="image-20230712103326030">
+
+<p>shutdown函数：</p>
+<p>终止网络连接的一般方法是调用close函数，不过close有两个限制，如下：</p>
+<ul>
+<li>close将描述符的引用计数减1，仅在该计数变为0时才关闭套接字。</li>
+<li>close终止读和写两个方向的数据传输。</li>
+</ul>
+<p>而shutdown函数，既可以不管引用计数就激发TCP的正常连接终止序列，也可以处理如下这种场景：</p>
+<p>我们需要告知对端我们已经完成了数据发送，即使对端仍有数据要发送给我们。</p>
+<blockquote>
+<p>理解为什么一定要四次挥手。</p>
+</blockquote>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230712105346134.png" srcset="/img/loading.gif" lazyload class title="image-20230712105346134">
+
+
+
+<ul>
+<li><code>SHUT_RD</code>：关闭读。套接字接收缓冲区的现有数据将被<strong>丢弃</strong>。</li>
+<li><code>SHUT_WR</code>：关闭写，TCP称为半关闭。套接字发送缓冲区的现有数据将被<strong>发送</strong>。</li>
+<li><code>SHUT_RDWR</code>：读写关闭</li>
+</ul>
+<p>陈硕的muduo网络库中，即使用了TCP的半关闭功能。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// muduo/net/SocketsOps.cc</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">sockets::shutdownWrite</span><span class="hljs-params">(<span class="hljs-type">int</span> sockfd)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">if</span> (::<span class="hljs-built_in">shutdown</span>(sockfd, SHUT_WR) &lt; <span class="hljs-number">0</span>)<br>  &#123;<br>    LOG_SYSERR &lt;&lt; <span class="hljs-string">&quot;sockets::shutdownWrite&quot;</span>;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="8-基本UDP套接字编程"><a href="#8-基本UDP套接字编程" class="headerlink" title="8. 基本UDP套接字编程"></a>8. 基本UDP套接字编程</h2><img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230713110933870.png" srcset="/img/loading.gif" lazyload class title="image-20230713110933870">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230713114245758.png" srcset="/img/loading.gif" lazyload class title="image-20230713114245758">
+
+<h2 id="11-名字与地址转换"><a href="#11-名字与地址转换" class="headerlink" title="11.  名字与地址转换"></a>11.  名字与地址转换</h2><img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714094837417.png" srcset="/img/loading.gif" lazyload class title="image-20230714094837417">
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># cmd:</span><br><span class="hljs-comment"># -----------------------------------------------------------</span><br>resolvectl status<br><span class="hljs-comment"># -----------------------------------------------------------</span><br><span class="hljs-comment"># output:</span><br>Global<br>       LLMNR setting: no                  <br>MulticastDNS setting: no                  <br>  DNSOverTLS setting: no                  <br>      DNSSEC setting: no                  <br>    DNSSEC supported: no                  <br>          DNSSEC NTA: 10.in-addr.arpa     <br>                      16.172.in-addr.arpa <br>                      168.192.in-addr.arpa<br>                      17.172.in-addr.arpa <br>                      18.172.in-addr.arpa <br>                      19.172.in-addr.arpa <br>                      20.172.in-addr.arpa <br>                      21.172.in-addr.arpa <br>                      22.172.in-addr.arpa <br>                      23.172.in-addr.arpa <br>                      24.172.in-addr.arpa <br>                      25.172.in-addr.arpa <br>                      26.172.in-addr.arpa <br>                      27.172.in-addr.arpa <br>lines 1-20...skipping...<br><br></code></pre></td></tr></table></figure>
+
+<p>同时支持IPv4与IPv6的转换函数：</p>
+<p>头文件：&lt;netdb.h&gt;</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714100425698.png" srcset="/img/loading.gif" lazyload class title="image-20230714100425698">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714100811868.png" srcset="/img/loading.gif" lazyload class title="image-20230714100811868">
+
+<p>创建一个TCP套接字并连接到一个服务器：</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714101711314.png" srcset="/img/loading.gif" lazyload class title="image-20230714101711314">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714102858926.png" srcset="/img/loading.gif" lazyload class title="image-20230714102858926">
+
+
+
+<h2 id="12-IPv4与IPv6的互操作性"><a href="#12-IPv4与IPv6的互操作性" class="headerlink" title="12. IPv4与IPv6的互操作性"></a>12. IPv4与IPv6的互操作性</h2><img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714103525135.png" srcset="/img/loading.gif" lazyload class title="image-20230714103525135">
+
+<blockquote>
+<p>拓展： 当数据流路径是 IPv6通道 –&gt; IPv4通道 –&gt;IPv6（通道）时，将采用隧道技术。</p>
+</blockquote>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714104353262.png" srcset="/img/loading.gif" lazyload class title="image-20230714104353262">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714104908196.png" srcset="/img/loading.gif" lazyload class title="image-20230714104908196">
+
+<p>总结： IPv6 对 IPv6，IPv4 对 IPv4， IPv4 对 IPv6 采用映射。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230714105120073.png" srcset="/img/loading.gif" lazyload class title="image-20230714105120073">
+
+<p>关于黄色标注处：若客户选择AAAA记录从而发送IPv6数据，则不能工作。若选择A记录， 则A记录实际作为一个IPv4映射的IPv6地址返回给客户，使得客户可以发送IPv4数据。</p>
+<h2 id="14-高级IO函数"><a href="#14-高级IO函数" class="headerlink" title="14. 高级IO函数"></a>14. 高级IO函数</h2><img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230717114657535.png" srcset="/img/loading.gif" lazyload class title="image-20230717114657535">
+
+<p>这两个函数是最重要的函数之一，因为最通用。具体的使用，可以查看vector AP底层网络通信部分的代码。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230718101508940.png" srcset="/img/loading.gif" lazyload class title="image-20230718101508940">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230717130305636.png" srcset="/img/loading.gif" lazyload class title="image-20230717130305636">
+
+<h2 id="15-unix域套接字"><a href="#15-unix域套接字" class="headerlink" title="15. unix域套接字"></a>15. unix域套接字</h2><p>unix域提供两类套接字：字节流套接字（类似于TCP）和数据报套接字（类似于UDP）。</p>
+<p>使用unix域套接字的三个理由：</p>
+<ul>
+<li>使用socket API，但不经过TCP&#x2F;IP协议栈，快</li>
+<li>可以在两个进程之间传递描述符</li>
+<li>可以传递凭证，是服务器验证客户身份的可靠手段</li>
+</ul>
+<p>unix域中用于标识客户与服务器的协议地址是普通文件系统中的路径名（绝对路径）。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230718093249058.png" srcset="/img/loading.gif" lazyload class title="image-20230718093249058">
+
+<p>socketpair函数可以用于网络服务器中的唤醒工作，除了该方式外，还可以使用管道或者eventfd方案。</p>
+<p>指定<code>SOCK_STREAM</code>的socketpari称为流管道，是全双工通信方式。</p>
+<p>注意：因为unix域套接字的地址是一个绝对路径，因此在bind地址之前，一定要确认路径文件是否存在，若存在，一定要先通过<code>unlink</code>清除路径文件。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230718094548141.png" srcset="/img/loading.gif" lazyload class title="image-20230718094548141">
+
+<h2 id="16-非阻塞式IO"><a href="#16-非阻塞式IO" class="headerlink" title="16. 非阻塞式IO"></a>16. 非阻塞式IO</h2><p>Pass</p>
+<h2 id="20-广播"><a href="#20-广播" class="headerlink" title="20. 广播"></a>20. 广播</h2><img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230719101442074.png" srcset="/img/loading.gif" lazyload class title="image-20230719101442074">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230719101234474.png" srcset="/img/loading.gif" lazyload class title="image-20230719101234474">
+
+
+
+<h2 id="21-多播"><a href="#21-多播" class="headerlink" title="21. 多播"></a>21. 多播</h2><p>单播地址标识单个IP接口，广播地址标识某子网的所有IP接口，多播地址标识一组IP接口。</p>
+<p>广播一般局限于局域网内使用，多播既可以用于局域网，也可以跨广域网使用。</p>
+<p>单播使用MAC地址，广播的MAC地址为 <code>FF-FF-FF-FF-FF-FF</code>，多播的MAC地址为：<code>01-00-5e-0 + 低序23位</code>，这三者是不同的。</p>
+<p>一个进程接收某个多播数据包的先决条件是：<strong>该进程加入相应的多播组并绑定相应的端口</strong>。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720092320779.png" srcset="/img/loading.gif" lazyload class title="image-20230720092320779">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720094101668.png" srcset="/img/loading.gif" lazyload class title="image-20230720094101668">
+
+<p>IPv4首部的TTL字段兼用作多播范围字段。</p>
+<ul>
+<li>0：接口局部，不能由接口输出</li>
+<li>1：链路局部，不可由路由器转发</li>
+<li>其他不再赘述，看图</li>
+</ul>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720094607440.png" srcset="/img/loading.gif" lazyload class title="image-20230720094607440">
+
+<p>关于不完备过滤与完备过滤：目前多播地址是<code>224.0.0.1</code>，若有一个多播地址<code>225.0.1.1</code>发送数据。由于多播地址组ID的高5位在到以太网地址的映射中被忽略，该主机的接口也将接收目的以太网地址为<code>01:00:5e:00:01:01</code>的帧。因此在数据链路层无法过滤掉，所以说数据链路层是不完备过滤。这种情况下，该帧承载的分组将在IP层完备过滤，IP层会比较该地址与本机接收应用进程已经加入的所有多播地址，根据结果是接收还是丢弃。因此该分组将被丢弃。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720100557840.png" srcset="/img/loading.gif" lazyload class title="image-20230720100557840">
+
+<p>多播套接字选项：采用<code>getsockopt</code>或<code>setsockopt</code>，相关选项如下：</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720105313825.png" srcset="/img/loading.gif" lazyload class title="image-20230720105313825">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720105446586.png" srcset="/img/loading.gif" lazyload class title="image-20230720105446586">
+
+<p>如果发送UDP多播之前，没有指定影响发送的多播套接字选项，那么UDP的外出接口将有内核选择，TTL或跳限将为1，并有一个副本自环回来。</p>
+<h2 id="附录A"><a href="#附录A" class="headerlink" title="附录A"></a>附录A</h2><p>IP层提供无连接不可靠的数据报递送服务。</p>
+<p>IP层最重要的功能之一是<strong>路由</strong>。</p>
+<p>IPv4首部最大长度为60字节，固定部分20字节，选项部分，最长40字节。</p>
+<p>协议字段中，1代表ICMPv4、2代表IGMPv4、6代表TCP、17代表UDP。</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720112341494.png" srcset="/img/loading.gif" lazyload class title="image-20230720112341494">
+
+<p>IPv6首部最大长度为40字节，没有选项。</p>
+<p>下一个首部：6代表TCP、17代表UDP、58代表ICMPv6等</p>
+<p>跳限类似于IPv4中的TTL</p>
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720113140264.png" srcset="/img/loading.gif" lazyload class title="image-20230720113140264">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230720113922109.png" srcset="/img/loading.gif" lazyload class title="image-20230720113922109">
+
+<img src="/2023/07/21/unix%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%8D%B71-%E5%A5%97%E6%8E%A5%E5%AD%97%E8%81%94%E7%BD%91API/image-20230721165536460.png" srcset="/img/loading.gif" lazyload class title="image-20230721165536460">
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/">#原创</a>
+      
+        <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">#计算机网络</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>unix网络编程卷1_套接字联网API</div>
+      <div>http://ziyangfu.github.io/2023/07/21/unix网络编程卷1-套接字联网API/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>FZY</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年7月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/07/05/NVIDIA-Orin%E5%B9%B3%E5%8F%B0%E8%BD%AF%E4%BB%B6%E8%B5%84%E6%96%99/" title="NVIDIA_Orin平台软件资料">
+                        <span class="hidden-mobile">NVIDIA_Orin平台软件资料</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","appKey":"PXw2Tf5wmgP8pwaWaayNPuiU","path":"window.location.pathname","placeholder":"说点什么吧","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
