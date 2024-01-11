@@ -1,0 +1,886 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="FZY">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="原文地址：潘忠显的博客-内存泄露的在线排查 本文首先介绍在线排查内存泄露的通用步骤，然后介绍三个线上内存泄露问题的排查案例，最后介绍内存相关知识、指令选项说明，并对常见疑问进行解释。 一、在线排查内存泄漏的步骤想到内存泄漏问题的排查，很多开发会想到使用 Valgrind。使用 Valgrind 有几个局限：  需要安装 Valgrind 需要启停服务进程 影响服务进程性能 依赖于测试用例覆盖到 B">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内存泄露的在线排查">
+<meta property="og:url" content="http://ziyangfu.github.io/2024/01/11/%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E7%9A%84%E5%9C%A8%E7%BA%BF%E6%8E%92%E6%9F%A5/index.html">
+<meta property="og:site_name" content="聚焦Linux内核与C++中间件">
+<meta property="og:description" content="原文地址：潘忠显的博客-内存泄露的在线排查 本文首先介绍在线排查内存泄露的通用步骤，然后介绍三个线上内存泄露问题的排查案例，最后介绍内存相关知识、指令选项说明，并对常见疑问进行解释。 一、在线排查内存泄漏的步骤想到内存泄漏问题的排查，很多开发会想到使用 Valgrind。使用 Valgrind 有几个局限：  需要安装 Valgrind 需要启停服务进程 影响服务进程性能 依赖于测试用例覆盖到 B">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/top-show.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/tnm-eth1.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/tnm-memory.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/memory-dump-bin.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/tnm2.oa.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/top.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/pmap_diff.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/top_thread_info.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/top_handler.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/mem_bin_dump.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/case2_code.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/linux-virtual-memory-map.png">
+<meta property="og:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/linux-x86-user-memory-map.png">
+<meta property="article:published_time" content="2024-01-11T03:18:25.000Z">
+<meta property="article:modified_time" content="2024-01-11T03:21:12.329Z">
+<meta property="article:author" content="FZY">
+<meta property="article:tag" content="转载">
+<meta property="article:tag" content="内存泄露">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://panzhongxian.cn/images/memory-leak-problem-1/top-show.png">
+  
+  
+  
+  <title>内存泄露的在线排查 - 聚焦Linux内核与C++中间件</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ziyangfu.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","app_key":"PXw2Tf5wmgP8pwaWaayNPuiU","server_url":"https://wzw3bc90.lc-cn-e1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>好好学习， 天天向上</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="内存泄露的在线排查"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-01-11 11:18" pubdate>
+          2024年1月11日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          63 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">内存泄露的在线排查</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>原文地址：<a target="_blank" rel="noopener" href="https://panzhongxian.cn/cn/2020/12/memory-leak-problem-1/">潘忠显的博客-内存泄露的在线排查</a></p>
+<p>本文首先介绍在线排查内存泄露的通用步骤，然后介绍三个线上内存泄露问题的排查案例，最后介绍内存相关知识、指令选项说明，并对常见疑问进行解释。</p>
+<h2 id="一、在线排查内存泄漏的步骤"><a href="#一、在线排查内存泄漏的步骤" class="headerlink" title="一、在线排查内存泄漏的步骤"></a>一、在线排查内存泄漏的步骤</h2><p>想到内存泄漏问题的排查，很多开发会想到使用 Valgrind。使用 Valgrind 有几个局限：</p>
+<ul>
+<li>需要安装 Valgrind</li>
+<li>需要启停服务进程</li>
+<li>影响服务进程性能</li>
+<li>依赖于测试用例覆盖到 BUG 分支</li>
+</ul>
+<p>由于这些原因，<strong>线上内存泄露问题并不适合用 Valgrind 来排查</strong>。相反，利用 <code>top</code>、<code>pmap</code> 等命令，以及 GDB(包括gcore脚本)、Vim 等工具排查，会更灵活，更直接。</p>
+<p>使用这些工具和指令排查<strong>基本步骤</strong>包括：</p>
+<ul>
+<li>通过 <code>top</code> 找到内存泄露的进程</li>
+<li>通过 <code>pmap</code> 找到内存泄露的地址及范围</li>
+<li>通过 <code>gcore</code> 对进程内存进行快照</li>
+<li>通过 <code>gdb</code> 加载内存信息</li>
+<li>通过 <code>dump binary</code> 导出泄露内存的内容</li>
+<li>通过 <code>vim</code> 查看内存内容</li>
+<li>根据内存中的内容，锁定对应的代码段，进行排查修复</li>
+</ul>
+<h2 id="二、单线程案例"><a href="#二、单线程案例" class="headerlink" title="二、单线程案例"></a>二、单线程案例</h2><p><strong>联调环境</strong>一台机器的应用程序使用的<strong>Memory usage (RES)</strong> 使用超过 1G。经确认，<strong>线上环境没有内存明显增长的情况出现</strong>。</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/top-show.png" srcset="/img/loading.gif" lazyload alt="top-show"></p>
+<p>通过TNM查看机器情况（请忽略中间的红线突起）：</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/tnm-eth1.png" srcset="/img/loading.gif" lazyload alt="tnm-eth1"></p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/tnm-memory.png" srcset="/img/loading.gif" lazyload alt="tnm-memory"></p>
+<p>通过上边两个曲线可以直观的看出：</p>
+<ul>
+<li>从10点开始，从某来源不断有请求发过来，响应这些请求的时候，应用程序使用的内存增加</li>
+<li>请求量越大，内存上涨越明显，比如在22点左右请求持续，内存增长斜率变大</li>
+</ul>
+<p>基本可以确定，因为联调环境的某些持续的异常请求，走到了<strong>程序某些异常处理分支，而这些分支中可能没有正确的释放内存</strong>。</p>
+<p>因为该机器上只有一个主要进程，可以直接跳过<strong>定位哪个进程的内存泄露</strong>的过程</p>
+<h3 id="1-定位内存泄露的地址范围"><a href="#1-定位内存泄露的地址范围" class="headerlink" title="1. 定位内存泄露的地址范围"></a>1. 定位内存泄露的地址范围</h3><p>首先使用 <code>pmap</code> 加 <code>&#123;pid&#125;</code> 的方式，查看内存映射：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pmap -x 8704  <span class="hljs-comment"># `-x`表示要显示扩展信息</span><br></code></pre></td></tr></table></figure>
+
+<p>结果如下：</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs tap">8704:   ./spp_worker ./../etc/spp_worker1.xml<br>Address           Kbytes     RSS   Dirty Mode   Mapping<br>0000000000400000    <span class="hljs-number"> 640 </span>   <span class="hljs-number"> 640 </span>     <span class="hljs-number"> 0 </span>r-x--  spp_worker<br>00000000005a0000     <span class="hljs-number"> 12 </span>    <span class="hljs-number"> 12 </span>     <span class="hljs-number"> 8 </span>rw---  spp_worker<br>00000000005a3000   <span class="hljs-number"> 2252 </span>   <span class="hljs-number"> 196 </span>   <span class="hljs-number"> 196 </span>rw---    [ anon ]<br>0000000001f19000    <span class="hljs-number"> 132 </span>   <span class="hljs-number"> 132 </span>   <span class="hljs-number"> 132 </span>rw---    [ anon ]<br>0000000001f3a000<span class="hljs-number"> 1110656 </span>1109196<span class="hljs-number"> 1109196 </span>rw---    [ anon ] *****<br>00007f2c90000000  <span class="hljs-number"> 56896 </span> <span class="hljs-number"> 56896 </span> <span class="hljs-number"> 56896 </span>rw---    [ anon ]<br>...<br></code></pre></td></tr></table></figure>
+
+<p>通过虚拟内存地址，我们可以看出，这是一个 64 位进程的地址，因为 32 位进程地址是从 0 到 <code>0xffffffff</code> (4G)，两者的范围不同，详见 #背景知识 – X86-64bit Linux内存布局</p>
+<p>通过 <code>pmap</code> 的结果，我们已经找到了最大有占用 1G 多的一个连续的块：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">0000000001f3a000</span> <span class="hljs-number">1110656</span> <span class="hljs-number">1109196</span> <span class="hljs-number">1109196</span> rw---   <span class="hljs-meta"> [ anon ]</span><br></code></pre></td></tr></table></figure>
+
+<p>根据地址可以看出这块大内存是在<strong>堆</strong>上，也就是可能我们 <code>new</code> 出来的对象没有 <code>delete</code> 掉。</p>
+<h3 id="2-导出内存中的内容"><a href="#2-导出内存中的内容" class="headerlink" title="2. 导出内存中的内容"></a>2. 导出内存中的内容</h3><p>首先要<strong>产生 core dump 文件</strong>，可以通过<code>man core</code> 指令查看对 core dump 文件的介绍，它包含有进程在某时刻的进程内存情况。</p>
+<p>以下指令会产生文件 core 文件，并命名为”core.8704”：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcore 8704<br></code></pre></td></tr></table></figure>
+
+<p>使用 <strong>GDB</strong> 关联 bin 文件和 core dump 文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gdb spp_worker core.8704<br></code></pre></td></tr></table></figure>
+
+<p>通过 <strong><code>info proc</code></strong> 的 GDB 指令，查看内存映射情况：</p>
+<figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs dns">(gdb) info proc mappings<br>process <span class="hljs-number">8704</span><br>cmdline = &#x27;./spp_worker&#x27;<br>cwd = &#x27;/xxxxxx/profile_svr/bin&#x27;<br>exe = &#x27;/xxxxxx/profile_svr/bin/spp_worker&#x27;<br>Mapped address spaces:<br><br>          Start Addr           End Addr       Size     Offset objfile<br>            <span class="hljs-number">0x400000</span>           <span class="hljs-number">0x4a0000</span>    <span class="hljs-number">0</span>xa0000          <span class="hljs-number">0</span> spp_worker<br>            <span class="hljs-number">0x5a0000</span>           <span class="hljs-number">0x5a3000</span>     <span class="hljs-number">0</span>x3000    <span class="hljs-number">0</span>xa0000 spp_worker<br>            <span class="hljs-number">0x5a3000</span>           <span class="hljs-number">0x7d6000</span>   <span class="hljs-number">0x233000</span>          <span class="hljs-number">0</span> <br>           <span class="hljs-number">0x1f19000</span>          <span class="hljs-number">0</span>x<span class="hljs-number">1f3a000</span>    <span class="hljs-number">0x21000</span>          <span class="hljs-number">0</span> [heap]<br>           <span class="hljs-number">0</span>x<span class="hljs-number">1f3a000</span>         <span class="hljs-number">0</span>x<span class="hljs-number">4611a000</span> <span class="hljs-number">0</span>x<span class="hljs-number">441e0000</span>          <span class="hljs-number">0</span> [heap]<br>      <span class="hljs-number">0</span>x7f<span class="hljs-number">2c90000000</span>     <span class="hljs-number">0</span>x7f<span class="hljs-number">2c93790000</span>  <span class="hljs-number">0x3790000</span>          <span class="hljs-number">0</span><br></code></pre></td></tr></table></figure>
+
+<p>通过 GDB 的 <strong><code>dump</code></strong> 指令，将内存导出到文件，之后通过 Vim 进行查看。</p>
+<p>因为内存已经涨的很多了，可以只 dump 出其中的一部分，而不用将 1G 多都 dump 出来。比如这里从起始位置偏移 <code>0x20000000</code>，即dump出 512M：</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm">(gdb) dump <span class="hljs-keyword">binary </span>memory result.<span class="hljs-keyword">bin </span><span class="hljs-number">0x1f3a000</span> <span class="hljs-number">0x21f3a000</span><br>du -<span class="hljs-keyword">sh </span>result.<span class="hljs-keyword">bin</span><br><span class="hljs-keyword"></span><span class="hljs-number">512</span>M	result.<span class="hljs-keyword">bin</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-分析内存内容"><a href="#3-分析内存内容" class="headerlink" title="3. 分析内存内容"></a>3. 分析内存内容</h3><p>直接使用 Vim 打开导出的二进制文件，可以看到里边有大量的<strong>请求</strong>信息，并且没有返回信息。</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/memory-dump-bin.png" srcset="/img/loading.gif" lazyload alt="memory-dump-bin"></p>
+<p>为了确认这块内存中具体的有多少请求，可以直接使用 grep 指令，查找并计数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">grep -a -c -P  <span class="hljs-string">&quot;application/x-www-form-urlencoded&quot;</span> result.bin <br>339755<br></code></pre></td></tr></table></figure>
+
+<p>512M 字节的内容有339755个HTTP请求，平均一个请求占用1500字节左右，基本可以确定是<strong>请求结构创建了而没有delete</strong>。</p>
+<h3 id="4-定位内存泄露的代码"><a href="#4-定位内存泄露的代码" class="headerlink" title="4. 定位内存泄露的代码"></a>4. 定位内存泄露的代码</h3><p>检查 service.cpp 中的 <code>spp_handle_process</code> 函数中有创建了 CommItopReq，其中一个分支是检查了请求中 channel_id 非法之后，会直接退出，没有 <code>delete</code> 指针。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">extern</span> <span class="hljs-string">&quot;C&quot;</span> <span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">spp_handle_process</span><span class="hljs-params">(<span class="hljs-type">unsigned</span> flow, <span class="hljs-type">void</span> *arg1, <span class="hljs-type">void</span> *arg2)</span> </span>&#123;<br>  <span class="hljs-comment">// ...</span><br>  itop_common::CommItopReq *common_itop_req_ptr = <span class="hljs-keyword">new</span> itop_common::CommItopReq;<br>  <span class="hljs-keyword">if</span> (common_itop_req_ptr == <span class="hljs-literal">NULL</span>) &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;create CommItopReq error.\n&quot;</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>  &#125; <br>  <br>  <span class="hljs-comment">// ...</span><br>  <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">validate</span>(common_itop_req_ptr-&gt;<span class="hljs-built_in">channelid</span>())) &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;invalid channelid in req.\n&quot;</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<p>公司同事指出，上边代码的错误：如果直接 new 失败，是会抛异常，而不是指针为空。</p>
+<p>这里使用 <code>new</code> 而不能直接声明变量的原因是：使用了 SPP 框架，在出了<code>spp_handle_process</code>函数作用域后，仍然会用到这个对象。</p>
+<p><strong>再去bin中确认</strong>，发现内存中大量遗留的请求是 <code>channelid=4099</code> 一个未配置的渠道ID：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">grep -o -P -a <span class="hljs-string">&quot;channelid=\d*&quot;</span> result.bin| <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -c | <span class="hljs-built_in">sort</span> -nr<br> 339796 channelid=4099<br>     59 channelid=<br></code></pre></td></tr></table></figure>
+
+<h4 id="改进方法"><a href="#改进方法" class="headerlink" title="改进方法"></a>改进方法</h4><ol>
+<li>认真检查每个分支，return之前要delete掉出创建的对象</li>
+<li>项目代码升级C++11或更高版本，使用智能指针管理内存</li>
+</ol>
+<h2 id="三、多线程案例"><a href="#三、多线程案例" class="headerlink" title="三、多线程案例"></a>三、多线程案例</h2><p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/tnm2.oa.png" srcset="/img/loading.gif" lazyload alt="tnm2.oa"></p>
+<h3 id="1-定位哪个进程的内存泄露"><a href="#1-定位哪个进程的内存泄露" class="headerlink" title="1. 定位哪个进程的内存泄露"></a>1. 定位哪个进程的内存泄露</h3><p>用 <code>top</code> 命令，然后 <code>shift + m</code> 按照内存排序，找到 <code>%MEM</code> 最高(或上升最快)的进程：</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/top.png" srcset="/img/loading.gif" lazyload alt="top"></p>
+<h3 id="2-定位内存泄露的地址范围"><a href="#2-定位内存泄露的地址范围" class="headerlink" title="2. 定位内存泄露的地址范围"></a>2. 定位内存泄露的地址范围</h3><p>通过 <code>pmap -x -p $&#123;pid&#125;</code> 的方式可以查看内存情况：</p>
+<ul>
+<li>内存是持续泄露，通过隔段时间，进行两次 <code>pmap</code> 记录内存使用情况</li>
+<li>物理内存占用明显增加，只需看 <code>RSS</code> 一列大于 0 的情况</li>
+<li>通过下图可以发现有 6 处位置有明显的物理内存增加</li>
+</ul>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/pmap_diff.png" srcset="/img/loading.gif" lazyload alt="pmap_diff"></p>
+<h3 id="3-定位内存泄露的线程"><a href="#3-定位内存泄露的线程" class="headerlink" title="3. 定位内存泄露的线程"></a>3. 定位内存泄露的线程</h3><p>因为有 6 个不同的地址内存明显增加，很可能是在 6 个并发相同逻辑的线程造成的，直接 top 去查看有没有并发是 6 的线程。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">top -b -n1 -H -p 94834 | grep -P <span class="hljs-string">&quot;^\s*[0-9]+&quot;</span> | awk <span class="hljs-string">&#x27;&#123;print $NF&#125;&#x27;</span>| <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -c | <span class="hljs-built_in">sort</span> -n<br></code></pre></td></tr></table></figure>
+
+<p>发现只有 handler 线程是 6 个：</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/top_thread_info.png" srcset="/img/loading.gif" lazyload alt="top_thread_info"></p>
+<p>至此，找到了具体的线程，但是仍然还不知道具体的代码位置。</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/top_handler.png" srcset="/img/loading.gif" lazyload alt="top_handler"></p>
+<h3 id="4-导出并分析内存中的内容"><a href="#4-导出并分析内存中的内容" class="headerlink" title="4. 导出并分析内存中的内容"></a>4. 导出并分析内存中的内容</h3><p>根据之前的介绍，要分析内存中的内容，需要进行以下几步：</p>
+<ul>
+<li><code>gcore</code> 产生 coredump 文件</li>
+<li><code>gdb</code> 加载 coredump 文件</li>
+<li><code>(gdb) dump binary memory result.bin &#123;start_addr&#125; &#123;end_addr&#125;</code>命令 dump 内存</li>
+<li>使用 Vim 打开二进制文件，使用 <code>:%!xxd</code> 的方式查看内容</li>
+</ul>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/mem_bin_dump.png" srcset="/img/loading.gif" lazyload alt="mem_bin_dump"></p>
+<p>将内存中可读的、有意义的字段发给开发同学，开发同学看出这是一个 Redis 的 Key。而整段的内存，也是 Redis 操作相关的一个结构体，包括其中的 <code>GET</code> 是 Redis 指令。</p>
+<h3 id="5-定位内存泄露的代码"><a href="#5-定位内存泄露的代码" class="headerlink" title="5. 定位内存泄露的代码"></a>5. 定位内存泄露的代码</h3><p>通过 <code>GET</code> 和 Key 的结构，开发同学很快的定位到了内存泄露的位置，for 循环的第一个分支中 <code>continue</code> 造成了部分内存没有清除。</p>
+<p>开发同学表示，自己的测试用例没有覆盖到这里，所以自己多次使用 Valgrind 进行排查也没有发现。</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/case2_code.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>修改之后上线，内存不在增长，如本节第一张图最后一段展示的那样。</p>
+<h2 id="四、多线程虚拟内存不足"><a href="#四、多线程虚拟内存不足" class="headerlink" title="四、多线程虚拟内存不足"></a>四、多线程虚拟内存不足</h2><h3 id="1-背景"><a href="#1-背景" class="headerlink" title="1. 背景"></a>1. 背景</h3><p>运维对集群的扩容，增加 Router 并将新增 Router 列表配置下发到 Worker 供 Worker 向新增 Router 进行注册，下发之后 Worker 不断重启。</p>
+<p>Worker Server 文件为 32位 ELF 文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># file worker_svr</span><br>worker_svr: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked (uses shared libs), <span class="hljs-keyword">for</span> GNU/Linux 2.6.18, not stripped<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-问题排查"><a href="#2-问题排查" class="headerlink" title="2. 问题排查"></a>2. 问题排查</h3><p>Worker 是因为 Crash 而重启的，Crash 的时候有产生 core 文件，直接查看 Crash 的原因：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs shell">Core was generated by `/data/xxx/bin/worker_svr ...&#x27;.<br>Program terminated with signal 11, Segmentation fault.<br><span class="hljs-meta prompt_">#</span><span class="language-bash">0  0xf77a4086 <span class="hljs-keyword">in</span> pthread_detach () from /lib/libpthread.so.0</span><br>(gdb) bt<br><span class="hljs-meta prompt_">#</span><span class="language-bash">0  0xf77a4086 <span class="hljs-keyword">in</span> pthread_detach () from /lib/libpthread.so.0</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">1  0x080a8cf7 <span class="hljs-keyword">in</span> base::Thread::detach (this=0xa11f1a8, thread=0) at base_thread.cpp:481</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">2  0x080a86d4 <span class="hljs-keyword">in</span> base::Thread::run (this=0xa11f1a8, ret=0x0) at base_thread.cpp:195</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">3  0x08059774 <span class="hljs-keyword">in</span> Monitor::start (this=0xa0b0500) at monitor.cpp:35</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">4  0x08057109 <span class="hljs-keyword">in</span> main (argc=11, argv=0xffcaf8f4) at main.cpp:408</span><br>(gdb) p errno<br><span class="hljs-meta prompt_">$</span><span class="language-bash">1 = 11</span><br></code></pre></td></tr></table></figure>
+
+<p>可以较为明显地看到：</p>
+<ul>
+<li>进程因为 “signal 11, Segmentation fault” 而崩溃</li>
+<li>在调用 <code>pthread_detach ()</code> 时发生了错误，<code>errno</code> 为 11-EAGAIN</li>
+</ul>
+<p>根据上边两个错误，以及 <code>pthread_create()</code> <a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man3/pthread_create.3.html">说明文档</a> 可以比较容易确认是<strong>内存不够而导致的创建线程失败</strong>。</p>
+<p>通过另外一个方面也可以印证，coredump 文件大概有 4 GB 左右：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># ls -lh /data/corefile/core_worker_svr_1635134468.39137 </span><br>-rw------- 1 user00 <span class="hljs-built_in">users</span> 3.9G 10月 25 12:01 /data/corefile/core_worker_svr_1635134468.39137<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-虚拟内存耗尽原因"><a href="#3-虚拟内存耗尽原因" class="headerlink" title="3. 虚拟内存耗尽原因"></a>3. 虚拟内存耗尽原因</h3><p>32-bit 的进程虚拟内存为 4 GB，其中包含内核虚拟存储 1 GB，用户可以使用的有 3 GB 存储空间。</p>
+<p>通过 Crash 产生的core文件，无法直接使用 <code>info proc mappings</code> 的方式来查看内存分布情况，因为这个命令是需要查看 <code>/proc/&#123;pid&#125;</code> 中的内容获得的。虽然有其他一些<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/5691193/gdb-listing-all-mapped-memory-regions-for-a-crashed-process">途径</a>可以查看 Crash 的进程的内存分布，但为了方便，我还是直接 gcore 线上一个正常运行的进程来看看：<strong>为什么增加 Router 会导致内存耗尽</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs gdb">(gdb) info proc mappings<br>    Start Addr   End Addr       Size     Offset     objfile<br>	 0x8048000  0x827a000   0x232000          0     /data/xxx/bin/worker_svr<br>	 0x827a000  0x827c000     0x2000   0x232000     /data/xxx/bin/worker_svr<br>	 0x827c000  0x827d000     0x1000          0     <br>	 0x8d49000  0x9988000   0xc3f000          0     [heap]<br>	0x29d00000 0x29d21000    0x21000          0     <br>	0x29d21000 0x29e00000    0xdf000          0     <br>	0x29f00000 0x29f21000    0x21000          0     <br>	0x29f21000 0x2a000000    0xdf000          0     <br>	0x2a4fe000 0x2a4ff000     0x1000          0     <br>	0x2a4ff000 0x2c4ff000  0x2000000          0     [stack:51349]   &lt;----- 32MB<br>	0x2c4ff000 0x2c500000     0x1000          0     <br>	0x2c500000 0x2e500000  0x2000000          0     [stack:51346]   &lt;----- 32MB<br></code></pre></td></tr></table></figure>
+
+<p>可以发现，内存中有比较大的块 32MB 出现了 91 次，这部分内存加起来总共占用 2912MB。通过 <code>info threads</code> 命令查看，是有 96 个线程。两者有高度的关联性。</p>
+<p>选一个线程进行具体的观察：</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs x86asm">(gdb) t <span class="hljs-number">88</span><br>[Switching to thread <span class="hljs-number">88</span> (Thread <span class="hljs-number">0x3aaa6b70</span> (LWP <span class="hljs-number">6410</span>))]#<span class="hljs-number">0</span>  <span class="hljs-number">0xf7746440</span> <span class="hljs-keyword">in</span> __kernel_vsyscall ()<br>(gdb) <span class="hljs-keyword">bt</span><br>#<span class="hljs-number">0</span>  <span class="hljs-number">0xf7746440</span> <span class="hljs-keyword">in</span> __kernel_vsyscall ()<br>#<span class="hljs-number">1</span>  <span class="hljs-number">0xf750b4a6</span> <span class="hljs-keyword">in</span> epoll_wait () from /lib/libc<span class="hljs-number">.</span>so<span class="hljs-number">.6</span><br>#<span class="hljs-number">2</span>  <span class="hljs-number">0x080a7b78</span> <span class="hljs-keyword">in</span> base::TCP_Client_Epoll::svc (this=<span class="hljs-number">0xba25b50</span>) <span class="hljs-meta">at</span> base_tcp_client_epoll<span class="hljs-number">.</span>cpp:<span class="hljs-number">188</span><br>#<span class="hljs-number">3</span>  <span class="hljs-number">0x080a817a</span> <span class="hljs-keyword">in</span> base::thread_proc (arg=<span class="hljs-number">0xba25b50</span>) <span class="hljs-meta">at</span> base_thread<span class="hljs-number">.</span>cpp:<span class="hljs-number">34</span><br>#<span class="hljs-number">4</span>  <span class="hljs-number">0xf771ab39</span> <span class="hljs-keyword">in</span> start_thread () from /lib/libpthread<span class="hljs-number">.</span>so<span class="hljs-number">.0</span><br>#<span class="hljs-number">5</span>  <span class="hljs-number">0xf750ac2e</span> <span class="hljs-keyword">in</span> clone () from /lib/libc<span class="hljs-number">.</span>so<span class="hljs-number">.6</span><br></code></pre></td></tr></table></figure>
+
+<p>打印线程的两个栈相关的寄存器：栈指针寄存器(extended stack pointer, 指向系统栈最上面一个栈帧的栈顶) 和基址指针寄存器(extended base pointer, 指向系统栈最上面一个栈帧的底部)：</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs x86asm">(gdb) info register <span class="hljs-built_in">esp</span> <span class="hljs-built_in">ebp</span><br><span class="hljs-built_in">esp</span>            <span class="hljs-number">0x3aaa6070</span>	<span class="hljs-number">0x3aaa6070</span><br><span class="hljs-built_in">ebp</span>            <span class="hljs-number">0x3aaa60e8</span>	<span class="hljs-number">0x3aaa60e8</span><br></code></pre></td></tr></table></figure>
+
+<p>这两个地址均落在上边的 mappings 的一块 32MB 的区域中：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">Start</span> Addr   End Addr       Size     Offset     objfile<br> <span class="hljs-attribute">0x38d00000</span> <span class="hljs-number">0</span>x3ad00000  <span class="hljs-number">0</span>x2000000      <span class="hljs-number">0</span>       <span class="hljs-meta"> [stack:55003]</span><br></code></pre></td></tr></table></figure>
+
+<p>所以可以确定每个(大部分)线程创建时，会申请这样一部分空间，而这部分其实就是<strong>线程的栈空间</strong>，参考《深入理解计算机系统》 12.3 基于线程的并发编程。、</p>
+<p>至于每个线程创建时会分配多大的栈空间，在 <code>pthread_create()</code> 的<a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man3/pthread_create.3.html">手册</a>中有说明：</p>
+<ul>
+<li>使用 <code>pthread_attr_setstacksize()</code> 显式的设置</li>
+<li>使用 <code>ulimit -s</code> 设置</li>
+<li>如果 <code>ulimit -s</code> 设置成 <code>unlimited</code>，将使用架构默认值，比如 i386 和 x86_64 默认都是 2MB</li>
+</ul>
+<p>我们的进程没有设置，而 <code>ulimit -s</code> 的值是 <code>32768 kb</code>，恰好为 32 MB，与看到的上述现象相符。</p>
+<p>简而言之，这种现象是因为<strong>配置中每增加一个 Router 就会对应创建一个线程进行注册和连接管理，当 Router 太多就会引起线程过多而造成虚拟内存耗尽</strong>。</p>
+<p>这里引出了几个问题：</p>
+<ul>
+<li>为什么线程间切换有损耗？</li>
+<li>一个进程可以启用多少个线程？</li>
+<li>pthread - Posix 线程 有哪些常用接口？</li>
+</ul>
+<h3 id="4-改进方法"><a href="#4-改进方法" class="headerlink" title="4. 改进方法"></a>4. 改进方法</h3><ul>
+<li>经过评估，我们进程中所使用的线程的栈会远小于 32MB，因此直接在进程中通过 <code>pthread_attr_setstacksize()</code> 设置为 2MB</li>
+<li>可以重新编译为 64-bit 版本</li>
+</ul>
+<h2 id="五、相关知识"><a href="#五、相关知识" class="headerlink" title="五、相关知识"></a>五、相关知识</h2><h3 id="1-Linux上进程内存布局"><a href="#1-Linux上进程内存布局" class="headerlink" title="1. Linux上进程内存布局"></a>1. Linux上进程内存布局</h3><p>32-bit 和 64-bit 虚拟内存地址的分布如下(<a target="_blank" rel="noopener" href="https://slideplayer.com/slide/17977818/">图片来源</a>)：</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/linux-virtual-memory-map.png" srcset="/img/loading.gif" lazyload alt="linux-virtual-memory-map"></p>
+<p>右侧 64-bit 的用户地址（绿色部分）又会做以下划分为（<a target="_blank" rel="noopener" href="https://slideplayer.com/slide/8132886/">图片来源</a>）：</p>
+<p><img src="https://panzhongxian.cn/images/memory-leak-problem-1/linux-x86-user-memory-map.png" srcset="/img/loading.gif" lazyload alt="linux-virtual-memory-map"></p>
+<h3 id="2-常用命令选项介绍"><a href="#2-常用命令选项介绍" class="headerlink" title="2. 常用命令选项介绍"></a>2. 常用命令选项介绍</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">top -b -n 1 -H -p 12877 <br></code></pre></td></tr></table></figure>
+
+<p><code>-b</code> 表示 Batch-mode，能避免输出中有 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape codes</a>，进而造成后续 <code>grep</code> 不符合预期的情况。</p>
+<p><code>-n 1</code> 只打印 1 帧，<code>-H</code> 显示多线程。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">diff pmap.01.log pmap.02.log | <span class="hljs-comment">#</span><br>awk  <span class="hljs-string">&#x27;&#123;if($4 &gt; 0)&#123;print $0&#125;&#125;&#x27;</span> | <span class="hljs-comment">#</span><br><span class="hljs-built_in">sort</span> -k2 -k1<br></code></pre></td></tr></table></figure>
+
+<p><code>sort -k2 -k1</code> 先按照第二列排列，第二列值相同的，按照第一列排列。</p>
+<h3 id="3-常见问题"><a href="#3-常见问题" class="headerlink" title="3. 常见问题"></a>3. 常见问题</h3><p>Q: 使用 <code>pmap</code> 找到了内存增长的地址，但是在 GDB 中<code>info proc mappings</code> 没有看到对应的内存地址，可以直接 <code>dump</code> 内存吗？</p>
+<p>A: 可以。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E8%BD%AC%E8%BD%BD/">#转载</a>
+      
+        <a href="/tags/%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2/">#内存泄露</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>内存泄露的在线排查</div>
+      <div>http://ziyangfu.github.io/2024/01/11/内存泄露的在线排查/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>FZY</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年1月11日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/08/16/%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90-libhv%E5%BA%93%E4%B8%AD%E7%9A%84MQTT%E5%8D%8F%E8%AE%AE%E5%AE%9E%E7%8E%B0/" title="代码分析_libhv库中的MQTT协议实现">
+                        <span class="hidden-mobile">代码分析_libhv库中的MQTT协议实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WZW3bC90hV1tsqCoIgL99KJk-9Nh9j0Va","appKey":"PXw2Tf5wmgP8pwaWaayNPuiU","path":"window.location.pathname","placeholder":"说点什么吧","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

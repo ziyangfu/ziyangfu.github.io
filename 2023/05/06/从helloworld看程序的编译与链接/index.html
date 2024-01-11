@@ -16,21 +16,22 @@
   <meta name="author" content="FZY">
   <meta name="keywords" content="">
   
-    <meta name="description" content="从hello world看程序的编译与链接众所周知，程序的编译分为四个阶段，分别为预处理、编译、汇编与链接。以下从一个简单的hello world剖析程序的编译过程。 1. 程序的编译与链接源代码： 123456&#x2F;&#x2F; @file: test.c#include&lt;stdio.h&gt;int main() &amp;#123;	printf(&quot;hello world\n&quot;);	re">
+    <meta name="description" content="从hello world看程序的编译与链接众所周知，程序的编译分为四个阶段，分别为预处理、编译、汇编与链接。以下从一个简单的hello world剖析程序的编译过程。   1. 程序的编译与链接源代码： 123456&#x2F;&#x2F; @file: test.c#include&lt;stdio.h&gt;int main() &amp;#123;	printf(&quot;hello world\n&quot;);">
 <meta property="og:type" content="article">
 <meta property="og:title" content="从helloworld看程序的编译与链接">
 <meta property="og:url" content="http://ziyangfu.github.io/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/index.html">
 <meta property="og:site_name" content="聚焦Linux内核与C++中间件">
-<meta property="og:description" content="从hello world看程序的编译与链接众所周知，程序的编译分为四个阶段，分别为预处理、编译、汇编与链接。以下从一个简单的hello world剖析程序的编译过程。 1. 程序的编译与链接源代码： 123456&#x2F;&#x2F; @file: test.c#include&lt;stdio.h&gt;int main() &amp;#123;	printf(&quot;hello world\n&quot;);	re">
+<meta property="og:description" content="从hello world看程序的编译与链接众所周知，程序的编译分为四个阶段，分别为预处理、编译、汇编与链接。以下从一个简单的hello world剖析程序的编译过程。   1. 程序的编译与链接源代码： 123456&#x2F;&#x2F; @file: test.c#include&lt;stdio.h&gt;int main() &amp;#123;	printf(&quot;hello world\n&quot;);">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://ziyangfu.github.io/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/image-20230911164028023.png">
 <meta property="og:image" content="http://ziyangfu.github.io/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/image-20230506134756517.png">
 <meta property="article:published_time" content="2023-05-06T02:58:39.000Z">
-<meta property="article:modified_time" content="2023-05-06T12:10:50.460Z">
+<meta property="article:modified_time" content="2023-09-11T08:41:05.435Z">
 <meta property="article:author" content="FZY">
 <meta property="article:tag" content="原创">
 <meta property="article:tag" content="计算机科学">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://ziyangfu.github.io/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/image-20230506134756517.png">
+<meta name="twitter:image" content="http://ziyangfu.github.io/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/image-20230911164028023.png">
   
   
   
@@ -303,6 +304,8 @@
               <div class="markdown-body">
                 
                 <h1 id="从hello-world看程序的编译与链接"><a href="#从hello-world看程序的编译与链接" class="headerlink" title="从hello world看程序的编译与链接"></a>从hello world看程序的编译与链接</h1><p>众所周知，程序的编译分为四个阶段，分别为预处理、编译、汇编与链接。以下从一个简单的hello world剖析程序的编译过程。</p>
+<img src="/2023/05/06/%E4%BB%8Ehelloworld%E7%9C%8B%E7%A8%8B%E5%BA%8F%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E9%93%BE%E6%8E%A5/image-20230911164028023.png" srcset="/img/loading.gif" lazyload alt="image-20230911164028023" style="zoom:80%;">
+
 <h3 id="1-程序的编译与链接"><a href="#1-程序的编译与链接" class="headerlink" title="1. 程序的编译与链接"></a>1. 程序的编译与链接</h3><p>源代码：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// @file: test.c</span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>	<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;hello world\n&quot;</span>);<br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 
